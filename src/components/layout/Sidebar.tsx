@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, Menu, Presentation } from "lucide-react";
+import { Settings, Menu, Presentation, Home } from "lucide-react";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const sidebarLinks = [
+  { href: "/home", label: "Home", icon: Home },
   { href: "/screener", label: "AI Screener", icon: Presentation },
 ];
 
