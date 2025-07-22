@@ -61,7 +61,7 @@ export default function Settings() {
                   key={tab}
                   variant={activeTab === tab ? "default" : "secondary"}
                   onClick={() => setActiveTab(tab)}
-                  className="text-sm whitespace-nowrap"
+                  className="text-sm whitespace-nowrap cursor-pointer"
                 >
                   {tab}
                 </Button>

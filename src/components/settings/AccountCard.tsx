@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CopyIcon, Pencil } from "lucide-react";
+import { CopyIcon, SquarePen } from "lucide-react";
 
 export function AccountCard() {
   const uid = "user-sA6uEHzdEGx0JsIq7qvQ";
@@ -32,32 +32,48 @@ export function AccountCard() {
               />
             </div>
           </div>
-          <Avatar className="h-16 w-16 self-center sm:self-auto">
+          <Avatar className="h-16 w-16 self-center sm:self-auto cursor-pointer">
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
         </div>
 
+        {/* Divider */}
+        <div className="my-6 border-t" />
+
         {/* User Info */}
         <div className="space-y-4">
-          <div>
+          <div className="flex justify-between items-center">
             <h3 className="text-sm text-muted-foreground">User Name</h3>
-            <div className="flex items-center justify-between">
-              <span className="truncate">{email}</span>
-              <Pencil className="w-4 h-4 cursor-pointer" />
+            <div className="flex items-center justify-between gap-2">
+              <span className="truncate text-sm">{email}</span>
+              <SquarePen className="w-3 h-3 cursor-pointer" />
             </div>
           </div>
 
-          <div>
+          {/* Divider */}
+          <div className="my-6 border-t" />
+
+          <div className="flex justify-between items-center">
             <h3 className="text-sm text-muted-foreground">Email</h3>
-            <span>{email}</span>
+            <span className="text-sm">{email}</span>
           </div>
+
+          {/* Divider */}
+          <div className="my-6 border-t" />
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <h3 className="text-sm text-muted-foreground">Password</h3>
-            <Button variant="secondary" size="sm" className="w-full sm:w-auto">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full sm:w-auto cursor-pointer"
+            >
               Set Password
             </Button>
           </div>
+
+          {/* Divider */}
+          <div className="my-6 border-t" />
         </div>
 
         {/* Logout */}
