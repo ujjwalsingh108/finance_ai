@@ -17,12 +17,13 @@ export function AccountCard() {
     <Card className="">
       <CardContent className="p-6 space-y-6">
         {/* Profile Picture + UID */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: UID info */}
+          <div className="flex flex-col justify-center">
             <h2 className="text-sm text-muted-foreground mb-1">
               Profile Picture
             </h2>
-            <div className="text-sm flex items-center gap-2">
+            <div className="text-sm flex items-center gap-2 flex-wrap">
               <span className="text-xs text-muted-foreground break-all">
                 UID: {uid}
               </span>
@@ -32,7 +33,9 @@ export function AccountCard() {
               />
             </div>
           </div>
-          <Avatar className="h-16 w-16 self-center sm:self-auto cursor-pointer">
+
+          {/* Right: Responsive Avatar */}
+          <Avatar className="w-12 h-12 sm:w-16 sm:h-16 cursor-pointer">
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
         </div>
