@@ -26,7 +26,9 @@ export function UsageCard() {
               className="flex flex-row items-center justify-between flex-wrap gap-2"
             >
               {/* Left: Label */}
-              <span className="text-sm">{item.label}</span>
+              <span className="text-sm text-muted-foreground">
+                {item.label}
+              </span>
 
               {/* Right: Usage or Unlock */}
               {!item.locked &&
