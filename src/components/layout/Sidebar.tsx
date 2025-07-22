@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Settings, Menu, Presentation, Home } from "lucide-react";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
@@ -34,7 +35,15 @@ export default function Sidebar() {
           >
             {/* Logo */}
             <div>
-              <div className="text-2xl font-bold mb-8">AIGOAT</div>
+              <div className="mb-2">
+                <Image
+                  src="/image/aigoat_logo.svg"
+                  alt="AIGOAT Logo"
+                  width={120}
+                  height={40}
+                  priority
+                />
+              </div>
 
               <nav className="space-y-2">
                 {sidebarLinks.map(({ href, label, icon: Icon }) => (
@@ -74,7 +83,16 @@ export default function Sidebar() {
       <aside className="hidden md:flex fixed top-0 left-0 h-full w-64 p-4 border-r bg-white z-40 flex-col justify-between">
         {/* Top section: Logo + Links */}
         <div>
-          <div className="text-2xl font-bold mb-8 px-2">AIGOAT</div>
+          <div className="mb-2 px-2">
+            <Image
+              src="/image/aigoat_logo.svg"
+              alt="AIGOAT Logo"
+              width={120}
+              height={40}
+              priority
+            />
+          </div>
+
           <nav className="space-y-2">
             {sidebarLinks.map(({ href, label, icon: Icon }) => (
               <Link
