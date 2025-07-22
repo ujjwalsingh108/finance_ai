@@ -36,9 +36,10 @@ export default function Settings() {
   return (
     <main className="min-h-screen px-4 py-6">
       <div className="max-w-5xl mx-auto">
-        {/* Tab Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex flex-wrap items-center gap-2 mb-6 md:flex-row">
+        {/* Header */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Left section: Back + Title */}
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -47,27 +48,33 @@ export default function Settings() {
               <ArrowLeft className="size-5" />
               <span className="sr-only">Back to Home</span>
             </Button>
-            <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
+            <h3 className="text-2xl font-semibold tracking-tight">
               My Account
             </h3>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-6">
-            {tabs.map((tab) => (
-              <Button
-                key={tab}
-                variant={activeTab === tab ? "default" : "secondary"}
-                onClick={() => setActiveTab(tab)}
-                className="text-sm"
-              >
-                {tab}
-              </Button>
-            ))}
+          {/* Tabs: responsive scrollable */}
+          <div className="overflow-x-auto w-full md:w-auto">
+            <div className="flex gap-2 min-w-max">
+              {tabs.map((tab) => (
+                <Button
+                  key={tab}
+                  variant={activeTab === tab ? "default" : "secondary"}
+                  onClick={() => setActiveTab(tab)}
+                  className="text-sm whitespace-nowrap"
+                >
+                  {tab}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
+        {/* Divider */}
+        <div className="my-6 border-t" />
+
         {/* Tab Content */}
-        {renderTabContent()}
+        <div>{renderTabContent()}</div>
       </div>
     </main>
   );
