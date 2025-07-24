@@ -5,6 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PricingCard } from "@/components/settings/PricingCard";
 import yearlyPlans from "@/lib/constants/yearlyPlans.json";
 import strategies from "@/lib/constants/strategies.json";
+import { RawPlan } from "@/types/PricingPlan";
 
 export const { ALL_STRATEGIES, ALL_PROMPTS, ALL_FEATURES } = strategies;
 
@@ -15,7 +16,7 @@ const monthlyPlans = yearlyPlans.map((plan) => ({
 }));
 
 // Transform strategy list into array of { includes: boolean, title: string }
-function enhanceStrategies(plan: any) {
+function enhanceStrategies(plan: RawPlan) {
   return {
     ...plan,
     features: ALL_FEATURES.map((feature) => ({

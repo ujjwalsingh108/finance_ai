@@ -10,3 +10,17 @@ export type Plan = {
   strategies: { includes: boolean; title: string }[];
   features: { includes: boolean; title: string }[];
 };
+
+// types/PricingPlan.ts
+export type RawPlan = {
+  tier: string;
+  price: number;
+  oldPrice: number;
+  yearly: number;
+  savings: string;
+  prompts: number;
+  prompt_features: string[];
+  strategies: string[];
+  features: string[];
+  extraStrategies?: string[];
+};
