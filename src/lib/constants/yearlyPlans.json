@@ -1,0 +1,131 @@
+[
+  {
+    "tier": "Basic",
+    "price": 11.96,
+    "oldPrice": 14.95,
+    "yearly": 143.52,
+    "savings": "$35.88",
+    "prompts": 100,
+    "strategies": ["Pivot Point Signal"],
+    "prompt_features": [
+      "Should I Buy Analysis",
+      "Price Prediction",
+      "Technical Analysis",
+      "Option Strategy"
+    ],
+    "features": [
+      "AI Screener",
+      "Stock Monitor",
+      "Congress Trade Monitor",
+      "Crypto Spotlight",
+      "Real-time Quotes & Charts",
+      "Alerts for Signals & Movers"
+    ],
+    "extraStrategies": [
+      "AI Stock Picker",
+      "SwingMax Signal",
+      "DayTrading Signal",
+      "Pattern Signal",
+      "S&P 500 Market Signal",
+      "AI Earning Prediction"
+    ]
+  },
+  {
+    "tier": "Pro",
+    "price": 23.96,
+    "oldPrice": 29.95,
+    "yearly": 287.52,
+    "savings": "$71.88",
+    "prompts": 400,
+    "strategies": [
+      "Pivot Point Signal",
+      "AI Stock Picker",
+      "SwingMax Signal",
+      "DayTrading Signal"
+    ],
+    "prompt_features": [
+      "Should I Buy Analysis",
+      "Price Prediction",
+      "Technical Analysis",
+      "Option Strategy"
+    ],
+    "features": [
+      "AI Screener",
+      "Stock Monitor",
+      "Congress Trade Monitor",
+      "Crypto Spotlight",
+      "Real-time Quotes & Charts",
+      "Alerts for Signals & Movers"
+    ],
+    "extraStrategies": [
+      "Pattern Signal",
+      "S&P 500 Market Signal",
+      "AI Earning Prediction"
+    ]
+  },
+  {
+    "tier": "Max",
+    "price": 39.96,
+    "oldPrice": 49.95,
+    "yearly": 479.52,
+    "savings": "$119.88",
+    "prompts": 800,
+    "strategies": [
+      "Pivot Point Signal",
+      "AI Stock Picker",
+      "SwingMax Signal",
+      "DayTrading Signal",
+      "Pattern Signal",
+      "S&P 500 Market Signal"
+    ],
+    "prompt_features": [
+      "Should I Buy Analysis",
+      "Price Prediction",
+      "Technical Analysis",
+      "Option Strategy"
+    ],
+    "features": [
+      "AI Screener",
+      "Stock Monitor",
+      "Congress Trade Monitor",
+      "Crypto Spotlight",
+      "Real-time Quotes & Charts",
+      "Alerts for Signals & Movers",
+      "First Priority Support"
+    ],
+    "extraStrategies": ["AI Earning Prediction"]
+  },
+  {
+    "tier": "Expert",
+    "price": 71.96,
+    "oldPrice": 89.95,
+    "yearly": 863.52,
+    "savings": "$215.88",
+    "prompts": 1500,
+    "strategies": [
+      "Pivot Point Signal",
+      "AI Stock Picker",
+      "SwingMax Signal",
+      "DayTrading Signal",
+      "Pattern Signal",
+      "S&P 500 Market Signal",
+      "AI Earning Prediction"
+    ],
+    "prompt_features": [
+      "Should I Buy Analysis",
+      "Price Prediction",
+      "Technical Analysis",
+      "Option Strategy"
+    ],
+    "features": [
+      "AI Screener",
+      "Stock Monitor",
+      "Congress Trade Monitor",
+      "Crypto Spotlight",
+      "Real-time Quotes & Charts",
+      "Alerts for Signals & Movers",
+      "First Priority Support"
+    ],
+    "extraStrategies": []
+  }
+]
