@@ -31,13 +31,13 @@ export default function Sidebar() {
 
           <SheetContent
             side="left"
-            className="w-64 p-4 flex flex-col justify-between"
+            className="w-64 pt-2 pb-4 px-4 flex flex-col justify-between"
           >
-            {/* Logo */}
+            {/* Logo + Links */}
             <div>
               <div className="mb-2">
                 <Image
-                  src="/image/aigoat_logo.svg"
+                  src="/image/aigoat_logo_trans.svg"
                   alt="AIGOAT Logo"
                   width={120}
                   height={40}
@@ -80,12 +80,12 @@ export default function Sidebar() {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed top-0 left-0 h-full w-64 p-4 border-r bg-white z-40 flex-col justify-between">
-        {/* Top section: Logo + Links */}
+      <aside className="hidden md:flex fixed top-0 left-0 h-full w-64 pt-2 pb-4 px-4 border-r bg-white z-40 flex-col justify-between">
+        {/* Logo + Links */}
         <div>
-          <div className="mb-2 px-2">
+          <div className="mb-2">
             <Image
-              src="/image/aigoat_logo.svg"
+              src="/image/aigoat_logo_trans.svg"
               alt="AIGOAT Logo"
               width={120}
               height={40}
@@ -110,7 +110,7 @@ export default function Sidebar() {
           </nav>
         </div>
 
-        {/* Bottom section: Settings */}
+        {/* Settings Link */}
         <nav className="space-y-2 mt-4">
           <Link
             href={bottomLink.href}

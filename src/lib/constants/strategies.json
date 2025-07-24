@@ -1,0 +1,26 @@
+{
+  "ALL_STRATEGIES": [
+    "Pivot Point Signal",
+    "AI Stock Picker",
+    "SwingMax Signal",
+    "DayTrading Signal",
+    "Pattern Signal",
+    "S&P 500 Market Signal",
+    "AI Earning Prediction"
+  ],
+  "ALL_PROMPTS": [
+    "Should I Buy Analysis",
+    "Price Prediction",
+    "Technical Analysis",
+    "Option Strategy"
+  ],
+  "ALL_FEATURES": [
+    "AI Screener",
+    "Stock Monitor",
+    "Congress Trade Monitor",
+    "Crypto Spotlight",
+    "Real-time Quotes & Charts",
+    "Alerts for Signals & Movers",
+    "First Priority Support"
+  ]
+}
