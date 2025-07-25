@@ -8,6 +8,7 @@ import { SubscriptionSection } from "@/components/settings/SubscriptionSection";
 import { Support } from "@/components/settings/Support";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { Reward } from "@/components/settings/Reward";
 
 const tabs = [
   "Account",
@@ -29,8 +30,12 @@ export default function Settings() {
         return <BillingSection />;
       case "Subscription":
         return <SubscriptionSection />;
-      default:
+      case "Support":
         return <Support />;
+      case "Rewards Program":
+        return <Reward />;
+      default:
+        return <AccountCard />;
     }
   };
 
