@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PartnerLink } from "./PartnerLink";
 
 export function PartnerProgramTabs() {
   return (
@@ -26,7 +27,9 @@ export function PartnerProgramTabs() {
         </TabsList>
       </div>
 
-      <TabsContent value="links">Links content coming soon.</TabsContent>
+      <TabsContent value="links">
+        <PartnerLink />
+      </TabsContent>
       <TabsContent value="clicks">Clicks content coming soon.</TabsContent>
       <TabsContent value="report">Report content coming soon.</TabsContent>
       <TabsContent value="finance">Finance content coming soon.</TabsContent>
