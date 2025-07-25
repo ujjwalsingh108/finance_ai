@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AccountCard } from "@/components/settings/AccountCard";
 import { BillingSection } from "@/components/settings/BillingSection";
 import { SubscriptionSection } from "@/components/settings/SubscriptionSection";
+import { Support } from "@/components/settings/Support";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
@@ -29,7 +30,7 @@ export default function Settings() {
       case "Subscription":
         return <SubscriptionSection />;
       default:
-        return <AccountCard />;
+        return <Support />;
     }
   };
 
