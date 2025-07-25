@@ -65,17 +65,21 @@ export function FeedbackForm() {
               <SelectContent>
                 <SelectGroup>
                   {/* <SelectLabel>Fruits</SelectLabel> */}
-                  <SelectItem value="apple">How to use ?</SelectItem>
-                  <SelectItem value="banana">Functionality issue</SelectItem>
-                  <SelectItem value="blueberry">
+                  <SelectItem value="how_to_use">How to use ?</SelectItem>
+                  <SelectItem value="functionality_issue">
+                    Functionality issue
+                  </SelectItem>
+                  <SelectItem value="billing">
                     Billing & Subscription issue
                   </SelectItem>
-                  <SelectItem value="grapes">Feature requests</SelectItem>
-                  <SelectItem value="pineapple">UI issue</SelectItem>
-                  <SelectItem value="pineapple">
+                  <SelectItem value="feature_requests">
+                    Feature requests
+                  </SelectItem>
+                  <SelectItem value="ui_issue">UI issue</SelectItem>
+                  <SelectItem value="product_unresponsive">
                     Product unresponsive
                   </SelectItem>
-                  <SelectItem value="pineapple">
+                  <SelectItem value="business_cooperation">
                     Business cooperation
                   </SelectItem>
                 </SelectGroup>
