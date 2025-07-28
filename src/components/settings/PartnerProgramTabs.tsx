@@ -1,6 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PartnerLink } from "./PartnerLink";
 import { PartnerClicks } from "./PartnerClicks";
+import { PartnerReport } from "./PartnerReport";
+import { PartnerFinance } from "./PartnerFinance";
+import { PartnerCreatives } from "./PartnerCreatives";
+import { PartnerFaq } from "./PartnerFaq";
 
 export function PartnerProgramTabs() {
   return (
@@ -34,12 +38,18 @@ export function PartnerProgramTabs() {
       <TabsContent value="clicks">
         <PartnerClicks />
       </TabsContent>
-      <TabsContent value="report">Report content coming soon.</TabsContent>
-      <TabsContent value="finance">Finance content coming soon.</TabsContent>
-      <TabsContent value="creatives">
-        Creatives content coming soon.
+      <TabsContent value="report">
+        <PartnerReport />
       </TabsContent>
-      <TabsContent value="faq">FAQ content coming soon.</TabsContent>
+      <TabsContent value="finance">
+        <PartnerFinance />
+      </TabsContent>
+      <TabsContent value="creatives">
+        <PartnerCreatives />
+      </TabsContent>
+      <TabsContent value="faq">
+        <PartnerFaq />
+      </TabsContent>
     </Tabs>
   );
 }
