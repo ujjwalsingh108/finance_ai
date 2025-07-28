@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,10 @@ export function PartnerReport() {
   const handleSubmit = () => {
     console.log("Form");
   };
+  const handleCSV = () => {
+    console.log("Handle CSV");
+  };
+
   return (
     <Card className="border border-gray-200 bg-white">
       <CardContent className="p-6 space-y-4">
@@ -92,7 +97,7 @@ export function PartnerReport() {
             </TableBody>
           </Table>
         </div>
-        <div>
+        <div className="mt-6">
           <RadioGroup defaultValue="comfortable">
             <div className="flex items-start gap-3">
               <RadioGroupItem value="default" id="r1" />
@@ -118,6 +123,11 @@ export function PartnerReport() {
               </div>
             </div>
           </RadioGroup>
+        </div>
+        <div className="mt-8">
+          <Button className="rounded-4xl cursor-pointer" onClick={handleCSV}>
+            Export more details to csv
+          </Button>
         </div>
       </CardContent>
     </Card>
