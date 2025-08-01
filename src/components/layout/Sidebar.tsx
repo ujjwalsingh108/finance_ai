@@ -1,129 +1,150 @@
 "use client";
 
+import { Home, Presentation, Settings, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Settings, Menu, Presentation, Home } from "lucide-react";
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const sidebarLinks = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/screener", label: "AI Screener", icon: Presentation },
+const links = [
+  { label: "Home", href: "/home", icon: <Home /> },
+  { label: "AI Screener", href: "/screener", icon: <Presentation /> },
 ];
 
-const bottomLink = { href: "/settings", label: "Settings", icon: Settings };
+const settingsLink = {
+  label: "Settings",
+  href: "/settings",
+  icon: <Settings />,
+};
 
-export default function Sidebar() {
+interface SidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (value: boolean) => void;
+}
+
+export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
 
   return (
-    <>
-      {/* Mobile Hamburger */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-
-          <SheetContent
-            side="left"
-            className="w-64 pt-2 pb-4 px-4 flex flex-col justify-between"
-          >
-            {/* Logo + Links */}
-            <div>
-              <div className="mb-2">
-                <Image
-                  src="/image/aigoat_logo_trans.svg"
-                  alt="AIGOAT Logo"
-                  width={120}
-                  height={40}
-                  priority
-                />
-              </div>
-
-              <nav className="space-y-2">
-                {sidebarLinks.map(({ href, label, icon: Icon }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={cn(
-                      "flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors",
-                      pathname === href ? "bg-gray-200" : ""
-                    )}
-                  >
-                    <Icon className="mr-2 h-4 w-4" />
-                    {label}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            {/* Bottom Settings Link */}
-            <nav className="space-y-2 mt-4">
-              <Link
-                href={bottomLink.href}
-                className={cn(
-                  "flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors",
-                  pathname === bottomLink.href ? "bg-gray-200" : ""
-                )}
-              >
-                <bottomLink.icon className="mr-2 h-4 w-4" />
-                {bottomLink.label}
-              </Link>
-            </nav>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed top-0 left-0 h-full w-64 pt-2 pb-4 px-4 border-r bg-white z-40 flex-col justify-between">
-        {/* Logo + Links */}
-        <div>
-          <div className="mb-2">
-            <Image
-              src="/image/aigoat_logo_trans.svg"
-              alt="AIGOAT Logo"
-              width={120}
-              height={40}
-              priority
-            />
-          </div>
-
-          <nav className="space-y-2">
-            {sidebarLinks.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors",
-                  pathname === href ? "bg-gray-200" : ""
-                )}
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                {label}
-              </Link>
-            ))}
-          </nav>
+    <aside
+      onMouseEnter={() => !isMobile && setIsCollapsed(false)}
+      onMouseLeave={() => !isMobile && setIsCollapsed(true)}
+      className={cn(
+        "fixed top-0 left-0 h-screen border-r bg-muted/40 transition-all duration-300 ease-in-out flex flex-col justify-between z-50",
+        isMobile
+          ? isCollapsed
+            ? "-translate-x-full"
+            : "translate-x-0 w-[240px]"
+          : isCollapsed
+          ? "w-[64px]"
+          : "w-[240px]"
+      )}
+    >
+      {/* Top section with Logo and Main Links */}
+      <div>
+        {/* Logo and Mobile Close Button */}
+        <div className="flex items-center justify-between h-[60px] px-4">
+          <Image
+            src="/images/aigoat_logo_trans.svg"
+            alt="Logo"
+            width={isMobile ? 120 : isCollapsed ? 32 : 120}
+            height={40}
+            priority
+          />
+          {isMobile && (
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="p-2 rounded-md hover:bg-muted transition-colors"
+              aria-label="Close sidebar"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
-        {/* Settings Link */}
-        <nav className="space-y-2 mt-4">
-          <Link
-            href={bottomLink.href}
-            className={cn(
-              "flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors",
-              pathname === bottomLink.href ? "bg-gray-200" : ""
-            )}
-          >
-            <bottomLink.icon className="mr-2 h-4 w-4" />
-            {bottomLink.label}
-          </Link>
+        {/* Main Nav */}
+        <nav className="space-y-1 px-2 mt-4">
+          {links.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md p-3 transition-all duration-200 w-full min-h-[44px] relative",
+                  isCollapsed
+                    ? "justify-center hover:bg-muted/50"
+                    : "hover:bg-muted hover:text-primary",
+                  isActive && "bg-primary/10 text-primary"
+                )}
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <div
+                    className={cn(
+                      "transition-colors",
+                      isActive && "text-primary"
+                    )}
+                  >
+                    {link.icon}
+                  </div>
+                  {!isCollapsed && (
+                    <span
+                      className={cn(
+                        "flex-1",
+                        isActive && "text-primary font-medium"
+                      )}
+                    >
+                      {link.label}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
         </nav>
-      </aside>
-    </>
+      </div>
+
+      {/* Bottom section with Settings link */}
+      <nav className="space-y-1 px-2 mb-4">
+        {(() => {
+          const isActive = pathname === settingsLink.href;
+          return (
+            <Link
+              href={settingsLink.href}
+              className={cn(
+                "flex items-center gap-3 rounded-md p-3 transition-all duration-200 w-full min-h-[44px] relative",
+                isCollapsed
+                  ? "justify-center hover:bg-muted/50"
+                  : "hover:bg-muted hover:text-primary",
+                isActive && "bg-primary/10 text-primary"
+              )}
+            >
+              <div className="flex items-center gap-3 w-full">
+                <div
+                  className={cn(
+                    "transition-colors",
+                    isActive && "text-primary"
+                  )}
+                >
+                  {settingsLink.icon}
+                </div>
+                {!isCollapsed && (
+                  <span
+                    className={cn(
+                      "flex-1",
+                      isActive && "text-primary font-medium"
+                    )}
+                  >
+                    {settingsLink.label}
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })()}
+      </nav>
+    </aside>
   );
 }
