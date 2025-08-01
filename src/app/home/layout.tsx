@@ -1,4 +1,4 @@
-export default function ScreenerLayout({
+export default function HomeLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
