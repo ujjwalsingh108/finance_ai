@@ -32,7 +32,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       onMouseEnter={() => !isMobile && setIsCollapsed(false)}
       onMouseLeave={() => !isMobile && setIsCollapsed(true)}
       className={cn(
-        "fixed top-0 left-0 h-screen border-r bg-muted/40 transition-all duration-300 ease-in-out flex flex-col justify-between z-50",
+        "fixed top-0 left-0 h-screen border-r bg-muted/90 transition-all duration-300 ease-in-out flex flex-col justify-between z-50",
         isMobile
           ? isCollapsed
             ? "-translate-x-full"
