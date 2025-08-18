@@ -4,13 +4,35 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CopyIcon, SquarePen } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 export function AccountCard() {
   const uid = "user-sA6uEHzdEGx0JsIq7qvQ";
   const email = "usingh2051@gmail.com";
 
+  const router = useRouter();
+
+  const supabase = createClient();
+
   const handleCopy = () => {
     navigator.clipboard.writeText(uid);
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Clear session from Supabase
+      await supabase.auth.signOut();
+
+      // Optional: clear browser storage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Redirect to login page
+      router.push("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
@@ -81,7 +103,11 @@ export function AccountCard() {
 
         {/* Logout */}
         <div className="flex justify-end pt-4">
-          <Button variant="destructive" className="w-full sm:w-auto">
+          <Button
+            variant="destructive"
+            className="w-full sm:w-auto cursor-pointer"
+            onClick={handleLogout}
+          >
             Log Out
           </Button>
         </div>
