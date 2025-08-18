@@ -66,6 +66,7 @@ export function LoginForm() {
           id="email"
           type="email"
           value={email}
+          placeholder="user@gmail.com"
           onChange={(e) => setEmail(e.target.value)}
           required
         />
@@ -76,6 +77,7 @@ export function LoginForm() {
           id="password"
           type="password"
           value={password}
+          placeholder="**********"
           onChange={(e) => setPassword(e.target.value)}
           required
         />

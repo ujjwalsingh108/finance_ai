@@ -83,6 +83,7 @@ export function SignupForm() {
           id="email"
           type="email"
           value={email}
+          placeholder="user@gmail.com"
           onChange={(e) => setEmail(e.target.value)}
           required
         />
@@ -94,6 +95,7 @@ export function SignupForm() {
           id="password"
           type="password"
           value={password}
+          placeholder="**********"
           onChange={(e) => setPassword(e.target.value)}
           required
         />
