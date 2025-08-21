@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { postAuthSetup } from "./postAuthSetup";
 
 type Mode = "individual" | "organization";
 
@@ -22,7 +23,9 @@ export function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const { error } = await createClient().auth.signInWithPassword({
+    const supabase = createClient();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -33,8 +36,21 @@ export function LoginForm() {
       return;
     }
 
-    // Go through callback for postAuthSetup (like signup)
-    window.location.href = `/auth/callback?mode=${mode}`;
+    const user = data.user;
+    if (!user) {
+      setLoading(false);
+      setError("Login failed: no user returned.");
+      return;
+    }
+
+    try {
+      await postAuthSetup(supabase, user, mode).then(() => {
+        window.location.href = `/home`;
+      });
+    } catch (err: any) {
+      setError(err.message || "Something went wrong during setup.");
+      setLoading(false);
+    }
   };
 
   const handleOAuthLogin = async (

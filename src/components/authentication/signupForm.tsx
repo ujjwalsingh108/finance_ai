@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "sonner";
 
 type Mode = "individual" | "organization";
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [orgName, setOrgName] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>("individual");
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +35,15 @@ export function SignupForm() {
 
     if (signupError) {
       setError(signupError.message);
+      toast.error("Signup Failed", {
+        description: signupError.message,
+      });
     } else {
-      // You might want to redirect to "check your email" page here
+      toast.success("Check your email 📩", {
+        description:
+          "We’ve sent you a confirmation link. Please click it to activate your account.",
+      });
     }
-
     setLoading(false);
   };
 
@@ -65,18 +70,6 @@ export function SignupForm() {
 
   return (
     <form onSubmit={handleSignup} className="space-y-4">
-      {mode === "organization" && (
-        <div className="space-y-2">
-          <Label htmlFor="orgName">Organization Name</Label>
-          <Input
-            id="orgName"
-            value={orgName}
-            onChange={(e) => setOrgName(e.target.value)}
-            required={mode === "organization"}
-          />
-        </div>
-      )}
-
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
