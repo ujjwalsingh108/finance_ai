@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans">
         {children}
-        <Toaster position="top-right" />
+        {/* <Toaster position="top-right" /> */}
       </body>
     </html>
   );
