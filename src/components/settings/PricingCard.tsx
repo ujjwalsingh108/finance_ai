@@ -12,47 +12,57 @@ export function PricingCard({
   plan: Plan;
   billing: "monthly" | "yearly";
 }) {
-  const displayPrice = billing === "yearly" ? plan.price : plan.oldPrice;
-  const displayNote =
+  const displayPrice = plan.price;
+  const monthlyPrice =
     billing === "yearly"
-      ? `$${plan.yearly}/Year`
-      : `${plan.prompts} Prompts / Month`;
+      ? displayPrice && (displayPrice / 12).toFixed(2)
+      : displayPrice;
+
+  // if (billing === "monthly") console.log("monthly-plan", plan);
+  // else console.log("yearly-plan", plan);
 
   return (
-    <Card className="flex flex-col justify-between shadow-md rounded-2xl border p-4 sm:p-4 w-full max-w-md h-full">
-      <CardContent className="p-0 flex flex-col gap-4 flex-grow">
+    <Card className="flex flex-col justify-between shadow-md rounded-2xl border p-4 sm:p-6 md:p-8 w-full max-w-sm sm:max-w-md h-full mx-auto">
+      <CardContent className="p-0 flex flex-col gap-6 flex-grow">
         {/* Header */}
-        <div className="flex flex-col h-full justify-between gap-2">
-          {/* Header */}
-          <div className="min-h-[40px] flex justify-between items-center">
-            <h3 className="text-2xl font-bold">{plan.tier}</h3>
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl sm:text-2xl font-bold">{plan.name}</h3>
             {billing === "yearly" && plan.savings && (
-              <span className="text-xs bg-pink-600 text-white px-2 py-0.5 rounded-full whitespace-nowrap">
+              <span className="text-[10px] sm:text-xs bg-pink-600 text-white px-2 py-0.5 rounded-full whitespace-nowrap">
                 Save {plan.savings}
               </span>
             )}
           </div>
 
           {/* Price Section */}
-          <div className="min-h-[40px]">
-            <div className="text-3xl font-bold">
-              ${displayPrice}
-              <span className="text-base font-medium text-muted-foreground">
+          <div>
+            <div className="text-2xl sm:text-3xl font-bold">
+              ${monthlyPrice}
+              <span className="text-sm sm:text-base font-medium text-muted-foreground">
                 /month
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">{displayNote}</p>
+            {billing === "yearly" ? (
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                ${displayPrice}
+                <span className="ml-1">/year</span>
+              </p>
+            ) : (
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Billed Monthly
+              </p>
+            )}
           </div>
 
           {/* Promo Section */}
-          <div className="space-y-2 min-h-[40px] flex flex-col justify-center">
+          <div className="flex flex-col gap-2">
             <Button className="w-full text-xs sm:text-sm rounded-2xl px-4 py-2">
               Promo: ONLY $1 For 7 Days
             </Button>
-
             <a
               href="#"
-              className="text-xs text-center text-blue-600 hover:underline block"
+              className="text-[11px] sm:text-xs text-center text-blue-600 hover:underline"
             >
               or skip trial and pay now
             </a>
@@ -60,72 +70,84 @@ export function PricingCard({
         </div>
 
         {/* Prompts per month */}
-        <div className="text-sm space-y-1 pt-2">
+        <div>
           <h4 className="font-semibold text-sm text-muted-foreground mb-2">
             {plan.prompts} Prompts per month
           </h4>
-          {plan.prompt_features.map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
-              {item.includes ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : (
-                <X className="w-4 h-4 text-red-500" />
-              )}
-              <span
-                className={
-                  item.includes ? "" : "line-through text-muted-foreground"
-                }
-              >
-                {item.title}
-              </span>
-            </div>
-          ))}
+          <div className="space-y-1">
+            {plan.prompt_features.map((item, index) => (
+              <div key={index} className="flex items-center gap-2">
+                {item.includes ? (
+                  <Check className="w-4 h-4 text-green-500" />
+                ) : (
+                  <X className="w-4 h-4 text-red-500" />
+                )}
+                <span
+                  className={
+                    item.includes
+                      ? "text-sm"
+                      : "line-through text-muted-foreground text-sm"
+                  }
+                >
+                  {item.title}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Strategies */}
-        <div className="text-sm space-y-1 pt-2">
+        <div>
           <h4 className="font-semibold text-sm text-muted-foreground mb-2">
             Trading Strategies
           </h4>
-          {plan.strategies.map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
-              {item.includes ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : (
-                <X className="w-4 h-4 text-red-500" />
-              )}
-              <span
-                className={
-                  item.includes ? "" : "line-through text-muted-foreground"
-                }
-              >
-                {item.title}
-              </span>
-            </div>
-          ))}
+          <div className="space-y-1">
+            {plan.strategies.map((item, index) => (
+              <div key={index} className="flex items-center gap-2">
+                {item.includes ? (
+                  <Check className="w-4 h-4 text-green-500" />
+                ) : (
+                  <X className="w-4 h-4 text-red-500" />
+                )}
+                <span
+                  className={
+                    item.includes
+                      ? "text-sm"
+                      : "line-through text-muted-foreground text-sm"
+                  }
+                >
+                  {item.title}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Premium Tools */}
-        <div className="text-sm space-y-1 pt-2">
+        <div>
           <h4 className="font-semibold text-sm text-muted-foreground mb-2">
             Premium Tools
           </h4>
-          {plan.features.map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
-              {item.includes ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : (
-                <X className="w-4 h-4 text-red-500" />
-              )}
-              <span
-                className={
-                  item.includes ? "" : "line-through text-muted-foreground"
-                }
-              >
-                {item.title}
-              </span>
-            </div>
-          ))}
+          <div className="space-y-1">
+            {plan.features.map((item, index) => (
+              <div key={index} className="flex items-center gap-2">
+                {item.includes ? (
+                  <Check className="w-4 h-4 text-green-500" />
+                ) : (
+                  <X className="w-4 h-4 text-red-500" />
+                )}
+                <span
+                  className={
+                    item.includes
+                      ? "text-sm"
+                      : "line-through text-muted-foreground text-sm"
+                  }
+                >
+                  {item.title}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

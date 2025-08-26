@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +14,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
+
+type Feedback = {
+  id: string;
+  email: string;
+  type: string;
+  detail: string;
+  attachments: string[];
+  created_at: string;
+};
 
 export function FeedbackForm() {
+  const supabase = createClient();
+
   const [email, setEmail] = useState("");
-  const [type] = useState("");
+  const [type, setType] = useState("");
   const [detail, setDetail] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [feedbackHistory, setFeedbackHistory] = useState<Feedback[]>([]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("feedback")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setFeedbackHistory(data as Feedback[]);
+      }
+    };
+
+    fetchHistory();
+  }, [supabase]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -25,20 +64,121 @@ export function FeedbackForm() {
     setFiles(selectedFiles);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleDeleteDbImage = async (url: string) => {
+    try {
+      const fileName = decodeURIComponent(url.split("/").pop()!);
+
+      // remove from bucket
+      await supabase.storage.from("feedback-attachments").remove([fileName]);
+
+      const currentFeedback = feedbackHistory[0];
+      const updated = currentFeedback.attachments.filter((att) => att !== url);
+
+      await supabase
+        .from("feedback")
+        .update({ attachments: updated })
+        .eq("id", currentFeedback.id);
+
+      setFeedbackHistory((prev) => {
+        const copy = [...prev];
+        copy[0].attachments = updated;
+        return copy;
+      });
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Submit logic here
-    console.log({ email, type, detail, files });
+    setLoading(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Failed to log in", {
+        description: "You must be logged in.",
+      });
+      setLoading(false);
+      return;
+    }
+
+    const { data: membership } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const attachmentUrls: string[] = [];
+
+    // Upload files
+    for (const file of files) {
+      const filePath = `${user.id}/${Date.now()}-${file.name}`;
+
+      const { error } = await supabase.storage
+        .from("feedback-attachments")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        console.error("Upload error", error.message);
+        continue;
+      }
+
+      const { data: publicUrl } = supabase.storage
+        .from("feedback-attachments")
+        .getPublicUrl(filePath);
+
+      attachmentUrls.push(publicUrl.publicUrl);
+    }
+
+    // Insert feedback
+    const { data: newFeedback, error: insertError } = await supabase
+      .from("feedback")
+      .insert({
+        user_id: user.id,
+        organization_id: membership?.organization_id || null,
+        email,
+        type,
+        detail,
+        attachments: attachmentUrls,
+      })
+      .select("*")
+      .single();
+
+    if (insertError) {
+      console.error(insertError);
+      toast.error("Submission failed", {
+        description: "Something went wrong. Please try again.",
+      });
+    } else {
+      toast.success("Feedback submitted", {
+        description: "Thank you! We'll get back to you soon.",
+      });
+
+      setFeedbackHistory((prev) => [newFeedback as Feedback, ...prev]);
+
+      setEmail("");
+      setType("");
+      setDetail("");
+      setFiles([]);
+    }
+
+    setLoading(false);
   };
 
   return (
     <Card className="border border-gray-200">
       <CardContent className="px-6 py-3 space-y-6">
-        <p className="leading-7 [&:not(:first-child)]:mt-2">
+        <p className="leading-7">
           You can submit any issues you encounter, and we will get back to you
           as soon as possible.
         </p>
         <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Email */}
           <div className="flex justify-between items-center gap-4">
             <Label htmlFor="email" className="text-gray-700">
               Email:
@@ -54,17 +194,17 @@ export function FeedbackForm() {
             />
           </div>
 
+          {/* Type */}
           <div className="flex justify-between items-center gap-4">
-            <Label htmlFor="email" className="text-gray-700">
+            <Label htmlFor="type" className="text-gray-700">
               Type:
             </Label>
-            <Select>
+            <Select value={type} onValueChange={(val) => setType(val)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {/* <SelectLabel>Fruits</SelectLabel> */}
                   <SelectItem value="how_to_use">How to use ?</SelectItem>
                   <SelectItem value="functionality_issue">
                     Functionality issue
@@ -87,6 +227,7 @@ export function FeedbackForm() {
             </Select>
           </div>
 
+          {/* Detail */}
           <div className="flex justify-between items-start gap-4">
             <Label htmlFor="description" className="text-gray-700">
               Detail:
@@ -95,11 +236,62 @@ export function FeedbackForm() {
               id="description"
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
-              placeholder="Please describe the issue in detail so we can get back to you with solutions as soon as possible"
+              placeholder="Please describe the issue in detail..."
               className="bg-white text-gray-900 border-gray-300 min-h-[120px]"
             />
           </div>
 
+          {/* Image Previews */}
+          {(feedbackHistory[0]?.attachments?.length > 0 ||
+            files.length > 0) && (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {/* DB images */}
+              {feedbackHistory[0]?.attachments?.map((url, idx) => (
+                <div
+                  key={`db-${idx}`}
+                  className="relative w-24 h-24 rounded-md overflow-hidden border flex-shrink-0"
+                >
+                  <img
+                    src={url}
+                    alt={`attachment-${idx}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDbImage(url)}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+
+              {/* New local files */}
+              {files.map((file, idx) => (
+                <div
+                  key={`local-${idx}`}
+                  className="relative w-24 h-24 rounded-md overflow-hidden border flex-shrink-0"
+                >
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFiles((prev) => prev.filter((_, i) => i !== idx))
+                    }
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* File upload */}
           <div className="space-y-4 flex flex-col">
             <Label htmlFor="screenshot" className="text-gray-700">
               Attach screenshots/images (up to 6)
@@ -114,15 +306,17 @@ export function FeedbackForm() {
             />
           </div>
 
+          {/* Actions */}
           <div className="flex justify-end gap-2">
-            <Button type="submit" className="cursor-pointer">
-              Feedback History
+            <Button type="button" variant="secondary">
+              Feedback History ({feedbackHistory.length})
             </Button>
             <Button
               type="submit"
-              className="text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              disabled={loading}
+              className="text-white bg-blue-600 hover:bg-blue-700"
             >
-              Submit
+              {loading ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </form>

@@ -1,6 +1,6 @@
 // Define the Plan type
 export type Plan = {
-  tier: string;
+  name: string;
   price: number; // current price (monthly)
   oldPrice?: number; // monthly price if discounted
   yearly?: number; // yearly price
