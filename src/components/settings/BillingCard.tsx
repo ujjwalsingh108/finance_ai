@@ -13,7 +13,7 @@ type BillingInfo = {
   price: number;
   startedAt?: string;
   endedAt?: string;
-  hasSubscription: boolean; // ✅ added this
+  hasSubscription: boolean;
 };
 
 export function BillingCard() {
@@ -42,8 +42,6 @@ export function BillingCard() {
         .maybeSingle();
 
       if (!membership?.organization_id) return;
-
-      console.log("membership", membership);
 
       // 3. Get subscription + plan
       const { data: subscription } = await supabase

@@ -52,6 +52,13 @@ export function FeedbackForm() {
 
       if (!error && data) {
         setFeedbackHistory(data as Feedback[]);
+
+        if (data.length > 0) {
+          const latest = data[0];
+          setEmail(latest.email);
+          setType(latest.type);
+          setDetail(latest.detail);
+        }
       }
     };
 
@@ -60,8 +67,17 @@ export function FeedbackForm() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    const selectedFiles = Array.from(e.target.files).slice(0, 6);
-    setFiles(selectedFiles);
+
+    const selectedFiles = Array.from(e.target.files);
+
+    setFiles((prevFiles) => {
+      // Merge old + new, then slice to max 6
+      const updatedFiles = [...prevFiles, ...selectedFiles].slice(0, 6);
+      return updatedFiles;
+    });
+
+    // Clear the input value so the same file can be reselected if needed
+    e.target.value = "";
   };
 
   const handleDeleteDbImage = async (url: string) => {
@@ -97,7 +113,7 @@ export function FeedbackForm() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      toast.error("Failed to log in", {
+      toast.error("Unauthorized access", {
         description: "You must be logged in.",
       });
       setLoading(false);
@@ -242,8 +258,7 @@ export function FeedbackForm() {
           </div>
 
           {/* Image Previews */}
-          {(feedbackHistory[0]?.attachments?.length > 0 ||
-            files.length > 0) && (
+          {feedbackHistory[0]?.attachments?.length || files.length ? (
             <div className="flex gap-3 overflow-x-auto pb-2">
               {/* DB images */}
               {feedbackHistory[0]?.attachments?.map((url, idx) => (
@@ -289,7 +304,7 @@ export function FeedbackForm() {
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
 
           {/* File upload */}
           <div className="space-y-4 flex flex-col">
