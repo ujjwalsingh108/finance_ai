@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
+import { Loading } from "@/components/ui/loading";
 
 type BillingInfo = {
   email: string;
@@ -18,10 +19,12 @@ type BillingInfo = {
 
 export function BillingCard() {
   const supabase = createClient();
+  const [loading, setLoading] = useState(true);
   const [billing, setBilling] = useState<BillingInfo | null>(null);
 
   useEffect(() => {
     const fetchBilling = async () => {
+      setLoading(true);
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -65,6 +68,7 @@ export function BillingCard() {
           price: 0,
           hasSubscription: false,
         });
+        setLoading(false);
         return;
       }
 
@@ -85,74 +89,82 @@ export function BillingCard() {
     fetchBilling();
   }, [supabase]);
 
-  if (!billing) {
-    return (
-      <Card className="mt-4 bg-muted/40">
-        <CardContent className="p-6">Loading billing info…</CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="mt-4 bg-muted/40">
       <CardContent className="p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Billing Account</span>
-          <span className="text-sm">{billing.email}</span>
-        </div>
+        {loading ? (
+          <Loading message="Loading billing info..." />
+        ) : (
+          billing && (
+            <>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Billing Account
+                </span>
+                <span className="text-sm">{billing.email}</span>
+              </div>
 
-        {/* Divider */}
-        <div className="my-6 border-t" />
+              {/* Divider */}
+              <div className="my-6 border-t" />
 
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">My Plan</span>
-          <span className="text-sm">{billing.planName}</span>
-        </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">My Plan</span>
+                <span className="text-sm">{billing.planName}</span>
+              </div>
 
-        {/* Divider */}
-        <div className="my-6 border-t" />
+              {/* Divider */}
+              <div className="my-6 border-t" />
 
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Price</span>
-          <span className="text-sm">
-            {billing.currency} {billing.price / 100}
-          </span>
-        </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Price</span>
+                <span className="text-sm">
+                  {billing.currency} {billing.price / 100}
+                </span>
+              </div>
 
-        {/* Divider */}
-        <div className="my-6 border-t" />
+              {/* Divider */}
+              <div className="my-6 border-t" />
 
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Order time</span>
-          <span className="text-sm">{billing.startedAt || "-"}</span>
-        </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Order time
+                </span>
+                <span className="text-sm">{billing.startedAt || "-"}</span>
+              </div>
 
-        {/* Divider */}
-        <div className="my-6 border-t" />
+              {/* Divider */}
+              <div className="my-6 border-t" />
 
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Plan ends on</span>
-          <span className="text-sm">{billing.endedAt || "-"}</span>
-        </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Plan ends on
+                </span>
+                <span className="text-sm">{billing.endedAt || "-"}</span>
+              </div>
 
-        {/* Divider */}
-        <div className="my-6 border-t" />
+              {/* Divider */}
+              <div className="my-6 border-t" />
 
-        {/* Disclaimer */}
-        <div className="text-sm text-muted-foreground mt-6">
-          <span className="font-semibold text-foreground">Disclaimer: </span>
-          Aigoat does not store your payment credentials. They are encrypted and
-          passed to third-party payment vendor through their API that we use to
-          process all payments.
-        </div>
+              {/* Disclaimer */}
+              <div className="text-sm text-muted-foreground mt-6">
+                <span className="font-semibold text-foreground">
+                  Disclaimer:{" "}
+                </span>
+                Aigoat does not store your payment credentials. They are
+                encrypted and passed to third-party payment vendor through their
+                API that we use to process all payments.
+              </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-          <Button variant="secondary">Billing history</Button>
-          <Button>
-            {billing.hasSubscription ? "Change Plan" : "Upgrade Plan"}
-          </Button>
-        </div>
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                <Button variant="secondary">Billing history</Button>
+                <Button>
+                  {billing.hasSubscription ? "Change Plan" : "Upgrade Plan"}
+                </Button>
+              </div>
+            </>
+          )
+        )}
       </CardContent>
     </Card>
   );

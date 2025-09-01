@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PricingCard } from "@/components/settings/PricingCard";
 import { createClient } from "@/utils/supabase/client";
+import { Loading } from "@/components/ui/loading";
 
 // -----------------
 // Normalizer
@@ -106,7 +107,7 @@ export function SubscriptionSection() {
       </div>
 
       {loading ? (
-        <div className="text-center">Loading plans...</div>
+        <Loading message="Loading plans..." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
           {filteredPlans.map((plan) => (
