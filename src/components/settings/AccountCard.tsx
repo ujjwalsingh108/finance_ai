@@ -134,7 +134,7 @@ export function AccountCard() {
 
               <Avatar className="w-12 h-12 sm:w-16 sm:h-16 cursor-pointer">
                 <AvatarFallback>
-                  {user?.email
+                  {!user?.user_metadata?.picture
                     ? user.email[0].toUpperCase()
                     : user?.user_metadata?.picture}
                 </AvatarFallback>
