@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CopyIcon, SquarePen } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -133,10 +133,15 @@ export function AccountCard() {
               </div>
 
               <Avatar className="w-12 h-12 sm:w-16 sm:h-16 cursor-pointer">
+                {/* ✅ Show the Google profile picture */}
+                <AvatarImage
+                  src={user?.user_metadata?.picture}
+                  alt={user?.email ?? "User"}
+                />
+
+                {/* ✅ Fallback (if no picture available) */}
                 <AvatarFallback>
-                  {!user?.user_metadata?.picture
-                    ? user.email[0].toUpperCase()
-                    : user?.user_metadata?.picture}
+                  {user?.email ? user.email[0].toUpperCase() : "U"}
                 </AvatarFallback>
               </Avatar>
             </div>
