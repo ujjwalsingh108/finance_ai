@@ -18,8 +18,9 @@ export function PricingCard({
       ? displayPrice && (displayPrice / 12).toFixed(2)
       : displayPrice;
 
-  // if (billing === "monthly") console.log("monthly-plan", plan);
-  // else console.log("yearly-plan", plan);
+  const handleBilling = () => {
+    console.log("payment gateway");
+  };
 
   return (
     <Card className="flex flex-col justify-between shadow-md rounded-2xl border p-4 sm:p-6 md:p-8 w-full max-w-sm sm:max-w-md h-full mx-auto">
@@ -57,12 +58,16 @@ export function PricingCard({
 
           {/* Promo Section */}
           <div className="flex flex-col gap-2">
-            <Button className="w-full text-xs sm:text-sm rounded-2xl px-4 py-2">
+            <Button
+              className="w-full text-xs sm:text-sm rounded-2xl px-4 py-2"
+              onClick={handleBilling}
+            >
               Promo: ONLY $1 For 7 Days
             </Button>
             <a
               href="#"
               className="text-[11px] sm:text-xs text-center text-blue-600 hover:underline"
+              onClick={handleBilling}
             >
               or skip trial and pay now
             </a>

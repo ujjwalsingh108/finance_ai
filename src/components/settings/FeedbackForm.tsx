@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import Image from "next/image";
 
 type Feedback = {
   id: string;
@@ -266,7 +267,9 @@ export function FeedbackForm() {
                   key={`db-${idx}`}
                   className="relative w-24 h-24 rounded-md overflow-hidden border flex-shrink-0"
                 >
-                  <img
+                  <Image
+                    width={100}
+                    height={100}
                     src={url}
                     alt={`attachment-${idx}`}
                     className="w-full h-full object-cover"
@@ -287,7 +290,9 @@ export function FeedbackForm() {
                   key={`local-${idx}`}
                   className="relative w-24 h-24 rounded-md overflow-hidden border flex-shrink-0"
                 >
-                  <img
+                  <Image
+                    width={100}
+                    height={100}
                     src={URL.createObjectURL(file)}
                     alt={file.name}
                     className="w-full h-full object-cover"
