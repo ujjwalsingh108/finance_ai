@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Header from "@/components/layout/header/Header";
 
 export default function SidebarLayout({
   children,
@@ -13,9 +14,21 @@ export default function SidebarLayout({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const isMobile = useIsMobile();
 
+  // Dynamically set sidebar width for header alignment
+  const sidebarWidth = isMobile ? 0 : isCollapsed ? 64 : 240;
+
   return (
     <div className="flex">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+
+      {/* Main content area */}
+      <div
+        className="flex-1 transition-all duration-300"
+        style={{ marginLeft: isMobile ? 0 : sidebarWidth }}
+      >
+        <Header sidebarWidth={sidebarWidth} />
+        <main className="pt-16 min-h-screen p-6">{children}</main>
+      </div>
 
       {/* Mobile Backdrop */}
       {isMobile && !isCollapsed && (
@@ -35,14 +48,6 @@ export default function SidebarLayout({
           <Menu size={20} />
         </button>
       )}
-
-      <main
-        className={`transition-all duration-300 flex-1 ${
-          isMobile ? "ml-0" : isCollapsed ? "ml-[64px]" : "ml-[240px]"
-        }`}
-      >
-        <div className="min-h-screen p-6">{children}</div>
-      </main>
     </div>
   );
 }

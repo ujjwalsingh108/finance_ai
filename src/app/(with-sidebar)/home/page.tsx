@@ -1,14 +1,14 @@
 import { ChartAreaInteractive } from "@/components/home/chart-area-interactive";
 import { DataTable } from "@/components/home/data-table";
+import Intro from "@/components/home/Intro";
 import { SectionCards } from "@/components/home/section-cards";
-import { SiteHeader } from "@/components/home/site-header";
 import data from "@/lib/constants/data.json";
 import React from "react";
 
 export default function Home() {
   return (
     <div>
-      <SiteHeader />
+      <Intro />
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
