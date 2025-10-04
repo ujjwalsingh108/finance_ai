@@ -19,7 +19,12 @@ export function PricingCard({
       : displayPrice;
 
   const handleBilling = () => {
+    console.log("plan", plan);
+    console.log("billing", billing);
     console.log("payment gateway");
+
+    // step 1
+    // create a checkout page - it will first update the subscription schema then call the payu test url with the available data required
   };
 
   return (
