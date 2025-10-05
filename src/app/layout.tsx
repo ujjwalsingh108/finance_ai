@@ -27,6 +27,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        <link rel="icon" type="image/svg+xml" href="/images/aigoat_logo.svg" />
+      </head>
       <body className="font-sans">
         {children}
         <Toaster position="top-right" />
