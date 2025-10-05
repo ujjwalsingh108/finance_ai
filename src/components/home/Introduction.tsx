@@ -7,14 +7,12 @@ import {
   PieChart,
   TrendingUp,
   MessageCircle,
-  Tally1,
 } from "lucide-react";
 import React from "react";
 import { Card } from "@/components/ui/card";
-import Image from "next/image";
 import { FeatureCard } from "./FeatureCard";
 
-export default function Intro() {
+export default function Introduction() {
   return (
     <section className="w-full max-w-6xl mx-auto mt-8 px-4">
       <Card className="w-full max-w-6xl mx-auto p-6 bg-card/80 shadow-xl bg-gradient-to-tr from-gray-200 to-transparent dark:bg-none">

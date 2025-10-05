@@ -19,7 +19,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
   icon: Icon,
   iconClassName = "",
 }) => (
-  <Card className="relative overflow-hidden cursor-pointer transition-all duration-200 shadow-lg hover:translate-y-1 active:scale-105 bg-gray-100 dark:bg-transparent">
+  <Card className="@container/card relative overflow-hidden transition-all duration-500 shadow-lg hover:scale-[1.03] bg-gradient-to-tr from-gray-50 to-transparent dark:bg-none cursor-pointer">
     <div className="px-2 relative">
       <div className="flex items-center gap-2">
         {Icon && <Icon className={iconClassName} />}

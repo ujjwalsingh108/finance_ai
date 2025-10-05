@@ -1,13 +1,14 @@
 import { IndexChartsGridLive } from "@/components/home/IndexChartsGridLive";
-import Intro from "@/components/home/Intro";
+import Introduction from "@/components/home/Introduction";
 import { SectionCards } from "@/components/home/SectionCards";
+import TokenUsageCard from "@/components/home/TokenUsageCard";
 import { ChartAreaInteractive } from "@/components/home/chart-area-interactive";
 import React from "react";
 
 export default function Home() {
   return (
     <div>
-      <Intro />
+      <Introduction />
       <div className="flex flex-1 flex-col">
         <div className="@container/main flex flex-1 flex-col gap-2">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -37,10 +38,12 @@ export default function Home() {
               />
             </div>
             <div className="px-4 lg:px-6">
+              <TokenUsageCard tokensUsed={324} tokensLimit={1000} />
+            </div>
+            <div className="px-4 lg:px-6">
               <ChartAreaInteractive />
             </div>
             <div className="px-4 lg:px-6">
-              {/* <IndexChartsGrid /> */}
               <IndexChartsGridLive />
             </div>
           </div>
