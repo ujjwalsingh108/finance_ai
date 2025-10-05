@@ -1,14 +1,14 @@
 "use client";
 
+import { Moon, Sun } from "lucide-react";
+import React, { useState, useEffect } from "react";
+
 interface HeaderProps {
   sidebarWidth?: number;
 }
 
-import { Moon, Sun } from "lucide-react";
-import React, { useState, useEffect } from "react";
-
 export default function Header({ sidebarWidth = 240 }: HeaderProps) {
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (darkMode) {
