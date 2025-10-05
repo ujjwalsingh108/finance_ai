@@ -1,4 +1,3 @@
-import { IndexChartsGrid } from "@/components/home/IndexChartsGrid";
 import { IndexChartsGridLive } from "@/components/home/IndexChartsGridLive";
 import Intro from "@/components/home/Intro";
 import { SectionCards } from "@/components/home/SectionCards";

@@ -43,8 +43,19 @@ function parseYahooChart(apiData: any) {
       "%)",
     high: meta.chartHigh || meta.regularMarketDayHigh || "-",
     low: meta.chartLow || meta.regularMarketDayLow || "-",
-    open: meta.regularMarketOpen || "-",
-    vol: meta.chartVolume || meta.regularMarketVolume || "-",
+    open: meta.regularMarketOpen?.toString() || "-",
+    vol: (() => {
+      const volumes = apiData.chart.result[0].indicators?.quote?.[0]?.volume;
+      if (Array.isArray(volumes) && volumes.length > 0) {
+        // Show latest volume value
+        return volumes[volumes.length - 1]?.toLocaleString() || "-";
+      }
+      return (
+        meta.regularMarketVolume?.toString() ||
+        meta.chartVolume?.toString() ||
+        "-"
+      );
+    })(),
     high52: meta.fiftyTwoWeekHigh || "-",
     low52: meta.fiftyTwoWeekLow || "-",
     chartData,
@@ -53,16 +64,12 @@ function parseYahooChart(apiData: any) {
 
 export function IndexChartsGridLive() {
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
-  const { data: nifty } = useSWR(
-    "https://query1.finance.yahoo.com/v8/finance/chart/^NSEI?interval=5m&range=1d",
-    fetcher,
-    { refreshInterval: 60000 }
-  );
-  const { data: sensex } = useSWR(
-    "https://query1.finance.yahoo.com/v8/finance/chart/^BSESN?interval=5m&range=1d",
-    fetcher,
-    { refreshInterval: 60000 }
-  );
+  const { data: nifty } = useSWR("/api/nifty", fetcher, {
+    refreshInterval: 60000,
+  });
+  const { data: sensex } = useSWR("/api/sensex", fetcher, {
+    refreshInterval: 60000,
+  });
 
   const niftyData = parseYahooChart(nifty);
   const sensexData = parseYahooChart(sensex);
