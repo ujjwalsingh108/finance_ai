@@ -1,7 +1,5 @@
-import { TrendingDown, TrendingUp } from "lucide-react";
 import Image from "next/image";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardAction,
@@ -23,20 +21,20 @@ export const SectionCards: React.FC<SectionCardProps> = ({
   tag,
 }) => {
   return (
-    <Card className="@container/card relative overflow-hidden">
+    <Card className="@container/card relative overflow-hidden transition-all duration-500 shadow-lg hover:scale-[1.03] cursor-pointer bg-[linear-gradient(135deg,_#e0e7ff_0%,_#f0fdfa_60%,_#f5d0fe_100%)] dark:bg-transparent">
       <div className="absolute top-0 right-0 bottom-0 w-1/3 h-full z-0">
         <Image
           src="/images/stock.jpg"
           alt="Stock Icon"
           fill
-          className="object-cover object-right"
+          className="object-cover object-right opacity-70 transition-opacity duration-500 group-hover:opacity-90"
           priority
         />
       </div>
       <div className="grid grid-cols-1 gap-4 p-2 relative z-10">
         <CardHeader>
           <CardDescription>{title}</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent transition-all duration-500">
             {tag}
           </CardTitle>
           <CardAction className="flex items-center gap-2">
