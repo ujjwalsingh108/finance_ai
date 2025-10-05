@@ -17,7 +17,7 @@ import { FeatureCard } from "./FeatureCard";
 export default function Intro() {
   return (
     <section className="w-full max-w-6xl mx-auto mt-8 px-4">
-      <Card className="w-full max-w-5xl mx-auto p-6 bg-card/80 shadow-xl bg-gradient-to-tr from-gray-200 to-transparent dark:bg-none">
+      <Card className="w-full max-w-6xl mx-auto p-6 bg-card/80 shadow-xl bg-gradient-to-tr from-gray-200 to-transparent dark:bg-none">
         <h1 className="text-3xl md:text-3xl font-bold text-center mb-4 dark:text-white text-black">
           The Most Powerful AI Platform
           <br />
@@ -50,7 +50,7 @@ export default function Intro() {
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <FeatureCard
             title="Technical Analysis"
             description="Analyze any ticker instantly with one click"
