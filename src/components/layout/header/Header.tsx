@@ -25,39 +25,28 @@ export default function Header({ sidebarWidth = 240 }: HeaderProps) {
       }`}
       style={{ left: sidebarWidth, width: `calc(100vw - ${sidebarWidth}px)` }}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        {/** Keep this span element commented */}
-        {/* <span
-          className={`font-bold text-xl tracking-tight truncate ${
-            darkMode ? "text-white" : "text-black"
-          }`}
-        >
-          Finance AI
-        </span> */}
-      </div>
+      <div className="flex items-center gap-2 min-w-0"></div>
       <div className="flex items-center gap-4 min-w-0">
         <button
-          className={`px-4 py-2 rounded-full font-semibold transition whitespace-nowrap ${
+          className={`px-4 py-2 cursor-pointer rounded-full font-semibold transition whitespace-nowrap ${
             darkMode
-              ? "bg-teal-400 text-black hover:bg-teal-300"
-              : "bg-teal-600 text-white hover:bg-teal-500"
+              ? "bg-primary text-black hover:bg-blue-300"
+              : "bg-primary text-white hover:bg-blue-400"
           }`}
         >
           Download
         </button>
         <button
-          className={`px-4 py-2 rounded-full font-semibold transition whitespace-nowrap ${
-            darkMode
-              ? "bg-gray-800 text-white hover:bg-gray-700"
-              : "bg-gray-200 text-black hover:bg-gray-300"
-          }`}
+          className={
+            "px-4 py-2 rounded-full font-semibold transition whitespace-nowrap cursor-pointer"
+          }
           onClick={() => setDarkMode((prev) => !prev)}
           aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
         >
           {darkMode ? <Moon /> : <Sun />}
         </button>
         <button
-          className={`bg-transparent ${
+          className={`bg-transparent cursor-pointer ${
             darkMode ? "text-white" : "text-black"
           } p-2 rounded-full hover:bg-white/10 transition`}
         >
@@ -79,7 +68,7 @@ export default function Header({ sidebarWidth = 240 }: HeaderProps) {
           </span>
         </button>
         <button
-          className={`bg-transparent ${
+          className={`bg-transparent cursor-pointer ${
             darkMode ? "text-white" : "text-black"
           } p-2 rounded-full hover:bg-white/10 transition`}
         >
@@ -98,7 +87,7 @@ export default function Header({ sidebarWidth = 240 }: HeaderProps) {
           </svg>
         </button>
         <button
-          className={`bg-transparent ${
+          className={`bg-transparent cursor-pointer ${
             darkMode ? "text-white" : "text-black"
           } p-2 rounded-full hover:bg-white/10 transition`}
         >
