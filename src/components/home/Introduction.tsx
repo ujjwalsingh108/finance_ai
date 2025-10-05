@@ -14,8 +14,8 @@ import { FeatureCard } from "./FeatureCard";
 
 export default function Introduction() {
   return (
-    <section className="w-full max-w-6xl mx-auto mt-8 px-4">
-      <Card className="w-full max-w-6xl mx-auto p-6 bg-card/80 shadow-xl bg-gradient-to-tr from-gray-200 to-transparent dark:bg-none">
+    <section className="w-full max-w-7xl mx-auto mt-8 px-4">
+      <Card className="w-full max-w-7xl mx-auto p-6 bg-card/80 shadow-xl bg-gradient-to-tr from-gray-200 to-transparent dark:bg-none">
         <h1 className="text-3xl md:text-3xl font-bold text-center mb-4 dark:text-white text-black">
           The Most Powerful AI Platform
           <br />
