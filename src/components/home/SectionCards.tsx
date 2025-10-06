@@ -21,7 +21,7 @@ export const SectionCards: React.FC<SectionCardProps> = ({
   tag,
 }) => {
   return (
-    <Card className="@container/card relative overflow-hidden transition-all duration-500 shadow-lg hover:scale-[1.03] cursor-pointer bg-[linear-gradient(135deg,_#e0e7ff_0%,_#f0fdfa_60%,_#f5d0fe_100%)] dark:bg-transparent">
+    <Card className="relative overflow-hidden transition-all duration-500 shadow-lg hover:scale-[1.03] cursor-pointer bg-[linear-gradient(135deg,_#e0e7ff_0%,_#f0fdfa_60%,_#f5d0fe_100%)] dark:bg-transparent">
       <div className="absolute top-0 right-0 bottom-0 w-1/3 h-full z-0">
         <Image
           src="/images/stock.jpg"
