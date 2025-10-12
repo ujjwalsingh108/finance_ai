@@ -116,7 +116,10 @@ export async function POST(req: Request) {
       const chunk = priceData.slice(i, i + chunkSize);
       const { error: priceError } = await supabase
         .from("historical_prices")
-        .upsert(chunk, { onConflict: "symbol, date" });
+        .upsert(chunk, {
+          onConflict:
+            "symbol, date, time, open, high, low, close, volume, buy_qty, sell_qty, sell_price, ltq, open_interest",
+        });
 
       if (priceError) {
         console.error(priceError);

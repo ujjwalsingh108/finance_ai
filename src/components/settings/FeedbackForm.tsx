@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,6 @@ type Feedback = {
 
 export function FeedbackForm() {
   const supabase = createClient();
-
   const [email, setEmail] = useState("");
   const [type, setType] = useState("");
   const [detail, setDetail] = useState("");
@@ -197,9 +195,7 @@ export function FeedbackForm() {
         <form className="space-y-6" onSubmit={handleSubmit}>
           {/* Email */}
           <div className="flex justify-between items-center gap-4">
-            <Label htmlFor="email" className="text-gray-700">
-              Email:
-            </Label>
+            <Label htmlFor="email">Email:</Label>
             <Input
               required
               type="email"
@@ -207,15 +203,13 @@ export function FeedbackForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="bg-white text-gray-900 border-gray-300"
+              className="border-gray-300"
             />
           </div>
 
           {/* Type */}
           <div className="flex justify-between items-center gap-4">
-            <Label htmlFor="type" className="text-gray-700">
-              Type:
-            </Label>
+            <Label htmlFor="type">Type:</Label>
             <Select value={type} onValueChange={(val) => setType(val)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select type" />
@@ -246,15 +240,13 @@ export function FeedbackForm() {
 
           {/* Detail */}
           <div className="flex justify-between items-start gap-4">
-            <Label htmlFor="description" className="text-gray-700">
-              Detail:
-            </Label>
+            <Label htmlFor="description">Detail:</Label>
             <Textarea
               id="description"
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
               placeholder="Please describe the issue in detail..."
-              className="bg-white text-gray-900 border-gray-300 min-h-[120px]"
+              className="border-gray-300 min-h-[120px]"
             />
           </div>
 
@@ -313,7 +305,7 @@ export function FeedbackForm() {
 
           {/* File upload */}
           <div className="space-y-4 flex flex-col">
-            <Label htmlFor="screenshot" className="text-gray-700">
+            <Label htmlFor="screenshot">
               Attach screenshots/images (up to 6)
             </Label>
             <Input
@@ -322,7 +314,7 @@ export function FeedbackForm() {
               multiple
               accept="image/*"
               onChange={handleFileChange}
-              className="bg-white text-gray-900 border-gray-300 file:text-gray-900"
+              className="border-gray-300"
             />
           </div>
 

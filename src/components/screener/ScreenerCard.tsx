@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
 
 export function ScreenerCard({
   label,
@@ -14,8 +15,19 @@ export function ScreenerCard({
   change?: string;
   image?: string;
 }) {
+  const router = useRouter();
+  const handleClick = () => {
+    // Use label as symbol for navigation, or add a symbol prop if available
+    if (label) {
+      router.push(`/screener/${encodeURIComponent(label)}`);
+    }
+  };
   return (
-    <Card className="relative h-48 overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+    <Card
+      className="relative h-48 overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
+      onClick={handleClick}
+      style={{ cursor: "pointer" }}
+    >
       <div
         className="absolute inset-0 bg-cover bg-center opacity-90"
         style={{
@@ -45,3 +57,5 @@ export function ScreenerCard({
     </Card>
   );
 }
+
+export default ScreenerCard;

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function PartnerCreatives() {
   return (
-    <Card className="border border-gray-200 bg-white">
+    <Card className="border bg-background shadow-sm">
       <CardContent className="p-4 space-y-2">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Download banners
@@ -15,19 +15,19 @@ export function PartnerCreatives() {
         </p>
       </CardContent>
       <div className="grid grid-cols-2 px-4 gap-2">
-        <Card className="flex flex-row justify-start items-center p-4 gap-2 hover:bg-gray-100 cursor-pointer">
+        <Card className="flex flex-row justify-start items-center p-4 gap-2 hover:bg-gray-500 cursor-pointer">
           <Atom />
           <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
             Basic light
           </h3>
         </Card>
-        <Card className="flex flex-row justify-start items-center p-4 gap-2 hover:bg-gray-100 cursor-pointer">
+        <Card className="flex flex-row justify-start items-center p-4 gap-2 hover:bg-gray-500 cursor-pointer">
           <Atom />
           <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
             Basic dark
           </h3>
         </Card>
-        <Card className="flex flex-row justify-start items-center p-4 gap-2 hover:bg-gray-100 cursor-pointer">
+        <Card className="flex flex-row justify-start items-center p-4 gap-2 hover:bg-gray-500 cursor-pointer">
           <Atom />
           <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
             Basic color

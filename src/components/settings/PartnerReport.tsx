@@ -30,7 +30,7 @@ export function PartnerReport() {
   };
 
   return (
-    <Card className="border border-gray-200 bg-white">
+    <Card className="border bg-background shadow-sm">
       <CardContent className="p-6 space-y-4">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Reports
@@ -41,7 +41,7 @@ export function PartnerReport() {
         <form className="space-y-2" onSubmit={handleSubmit}>
           <div>
             <Select>
-              <SelectTrigger className="w-1/2">
+              <SelectTrigger className="w-1/2 cursor-pointer">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -69,9 +69,11 @@ export function PartnerReport() {
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell className="font-medium text-center">0</TableCell>
-                <TableCell className="text-center">0</TableCell>
-                <TableCell className="text-center">0</TableCell>
+                <TableCell className="font-medium text-center text-gray-500">
+                  0
+                </TableCell>
+                <TableCell className="text-center text-gray-500">0</TableCell>
+                <TableCell className="text-center text-gray-500">0</TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -90,9 +92,11 @@ export function PartnerReport() {
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell className="font-medium text-center">$0.00</TableCell>
-                <TableCell className="text-center">0</TableCell>
-                <TableCell className="text-center">0</TableCell>
+                <TableCell className="font-medium text-center text-gray-500">
+                  $0.00
+                </TableCell>
+                <TableCell className="text-center text-gray-500">0</TableCell>
+                <TableCell className="text-center text-gray-500">0</TableCell>
               </TableRow>
             </TableBody>
           </Table>
