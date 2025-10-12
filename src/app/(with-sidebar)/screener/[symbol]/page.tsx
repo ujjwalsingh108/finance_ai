@@ -6,11 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 
-export default function StockStrategyPage({
-  params,
-}: {
-  params: { symbol: string };
-}) {
+export default function StockStrategyPage() {
   const router = useRouter();
   // TODO: Fetch stock data for params.symbol
 
