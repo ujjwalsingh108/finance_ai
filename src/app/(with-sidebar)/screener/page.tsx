@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import { AIScreenerSection } from "@/components/screener/AIScreenerSection";
+import { Button } from "@/components/ui/button";
 
 const screenerData = [
   {
@@ -120,10 +123,63 @@ const screenerData = [
   },
 ];
 
+function handleExcelUpload(file: File) {
+  if (!file) return;
+  const formData = new FormData();
+  formData.append("file", file);
+  fetch("/api/upload-historical", {
+    method: "POST",
+    body: formData,
+  }).then(() => {
+    // Optionally handle response
+  });
+}
+
 export default function Screener() {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = React.useState("");
+  const [uploading, setUploading] = React.useState(false);
+
+  const handleButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setFileName(file.name);
+    setUploading(true);
+    await handleExcelUpload(file);
+    setUploading(false);
+  };
+
   return (
     <div className="p-4 space-y-6">
-      <h1 className="text-3xl font-bold">Discover Your Next Winning Trades</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">
+          Discover Your Next Winning Trades
+        </h1>
+        <input
+          type="file"
+          accept=".xlsx,.xls,.NSE"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
+        <Button
+          variant="default"
+          className="mb-4 cursor-pointer"
+          onClick={handleButtonClick}
+          disabled={uploading}
+        >
+          {uploading ? "Uploading..." : "Import Stocks"}
+        </Button>
+        <span className="ml-2 text-xs text-gray-500">
+          {fileName ? fileName : "No file chosen"}
+        </span>
+      </div>
       {screenerData.map((section, idx) => (
         <AIScreenerSection
           key={idx}
