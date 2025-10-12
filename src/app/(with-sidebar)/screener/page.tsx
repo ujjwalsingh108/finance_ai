@@ -1,8 +1,7 @@
 "use client";
-
 import React from "react";
-import { AIScreenerSection } from "@/components/screener/AIScreenerSection";
 import { Button } from "@/components/ui/button";
+import { AIScreenerSection } from "@/components/screener/AIScreenerSection";
 
 const screenerData = [
   {
@@ -168,17 +167,19 @@ export default function Screener() {
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
-        <Button
-          variant="default"
-          className="mb-4 cursor-pointer"
-          onClick={handleButtonClick}
-          disabled={uploading}
-        >
-          {uploading ? "Uploading..." : "Import Stocks"}
-        </Button>
-        <span className="ml-2 text-xs text-gray-500">
-          {fileName ? fileName : "No file chosen"}
-        </span>
+        <div className="flex flex-col">
+          <Button
+            variant="default"
+            className="mb-2 cursor-pointer"
+            onClick={handleButtonClick}
+            disabled={uploading}
+          >
+            {uploading ? "Uploading..." : "Import Stocks"}
+          </Button>
+          <span className="ml-2 text-xs text-gray-500">
+            {fileName ? fileName : "No file chosen"}
+          </span>
+        </div>
       </div>
       {screenerData.map((section, idx) => (
         <AIScreenerSection
