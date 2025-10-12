@@ -100,7 +100,7 @@ Referees also get up to $76.75 discount on annual plans via your link.`,
 
 export function PartnerFaq() {
   return (
-    <Card className="border border-gray-200 bg-white">
+    <Card className="border bg-background shadow-sm">
       <CardContent className="p-4 space-y-4">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Frequently Asked Questions
@@ -112,7 +112,7 @@ export function PartnerFaq() {
               <AccordionTrigger className="text-md cursor-pointer">
                 {faq.question}
               </AccordionTrigger>
-              <AccordionContent className="whitespace-pre-wrap text-sm text-gray-700">
+              <AccordionContent className="whitespace-pre-wrap text-sm text-gray-500">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>

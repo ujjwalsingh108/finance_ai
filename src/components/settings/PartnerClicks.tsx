@@ -15,7 +15,7 @@ export function PartnerClicks() {
   };
 
   return (
-    <Card className="border border-gray-200 bg-white">
+    <Card className="border bg-background shadow-sm">
       <CardContent className="p-6 space-y-4">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Clicks
@@ -26,7 +26,7 @@ export function PartnerClicks() {
         <form className="space-y-2" onSubmit={handleSubmit}>
           <div>
             <Select>
-              <SelectTrigger className="w-1/2">
+              <SelectTrigger className="w-1/2 cursor-pointer">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -48,7 +48,7 @@ export function PartnerClicks() {
             <p className="font-medium leading-7 [&:not(:first-child)]:mt-0">
               Link
             </p>
-            <p className="text-zinc-700 leading-7 [&:not(:first-child)]:mt-0">
+            <p className="text-zinc-500 leading-7 [&:not(:first-child)]:mt-0">
               Total All Landings/Links
             </p>
           </div>
@@ -56,7 +56,7 @@ export function PartnerClicks() {
             <p className="font-medium leading-7 [&:not(:first-child)]:mt-0">
               Clicks
             </p>
-            <p className="text-zinc-700 leading-7 [&:not(:first-child)]:mt-0">
+            <p className="text-zinc-500 leading-7 [&:not(:first-child)]:mt-0">
               0
             </p>
           </div>
@@ -64,11 +64,11 @@ export function PartnerClicks() {
         {/* Divider */}
         <div className="my-6 border-t" />
         <div className="space-y-1">
-          <p className="text-gray-700 leading-7 [&:not(:first-child)]:mt-0 text-sm">
+          <p className="text-gray-500 leading-7 [&:not(:first-child)]:mt-0 text-sm">
             Please note that the above click data is approximate. To track the
             exact number of clicks, please use your own click tracker.
           </p>
-          <p className="text-gray-700 leading-7 [&:not(:first-child)]:mt-0 text-sm">
+          <p className="text-gray-500 leading-7 [&:not(:first-child)]:mt-0 text-sm">
             Your affiliate commission isn&apos;t related to the number of clicks
             to your affiliate links. We compensate for paid conversions only
             (CPS) and not for any clicks (CPC).

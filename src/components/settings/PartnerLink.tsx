@@ -14,7 +14,7 @@ export function PartnerLink() {
   };
 
   return (
-    <Card className="border border-gray-200 bg-white">
+    <Card className="border bg-background shadow-sm">
       <CardContent className="p-6 space-y-4">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Link Builder
@@ -25,35 +25,25 @@ export function PartnerLink() {
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="link" className="text-gray-700">
-                Target link*
-              </Label>
+              <Label htmlFor="link">Target link*</Label>
               <Input placeholder="https://aigoat.in" />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="link" className="text-gray-700">
-                Affiliate ID*
-              </Label>
+              <Label htmlFor="link">Affiliate ID*</Label>
               <Input placeholder="affiliation-sA6uEHzdEGx0Jslq7qvQ" />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="link" className="text-gray-700">
-                Aff Sub
-              </Label>
+              <Label htmlFor="link">Aff Sub</Label>
               <Input />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="link" className="text-gray-700">
-                Source
-              </Label>
+              <Label htmlFor="link">Source</Label>
               <Input />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="link" className="text-gray-700">
-                Final link
-              </Label>
+              <Label htmlFor="link">Final link</Label>
               <div className="flex justify-between items-center gap-2">
                 <Input placeholder="https://intellectia.ai/?aff_id=affiliation-sA6uEHzdEGx0Jslq7qvQ" />
                 <CopyIcon
@@ -90,7 +80,7 @@ export function PartnerLink() {
           <p className="font-medium leading-7 [&:not(:first-child)]:mt-2">
             Here are some guidelines to follow:
           </p>
-          <ul className="list-disc pl-4 space-y-2 text-gray-700">
+          <ul className="list-disc pl-4 space-y-2 text-gray-500">
             <li>
               <p className="leading-7">
                 Avoid purchasing an Intellectia subscription through your own
@@ -128,7 +118,7 @@ export function PartnerLink() {
               </p>
             </li>
           </ul>
-          <small className="text-sm leading-none font-medium text-gray-700">
+          <small className="text-sm leading-none font-medium text-gray-500">
             To ensure we&apos;re working well together, read our{" "}
             <span className="text-teal-400">Partner Program rules.</span>
           </small>

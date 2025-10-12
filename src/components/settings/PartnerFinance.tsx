@@ -30,8 +30,9 @@ export function PartnerFinance() {
   const handleCSV = () => {
     console.log("Handle CSV");
   };
+
   return (
-    <Card className="border border-gray-200 bg-white">
+    <Card className="border bg-background shadow-sm">
       <CardContent className="p-6 space-y-4">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Finance
@@ -42,7 +43,7 @@ export function PartnerFinance() {
         <form className="space-y-2" onSubmit={handleSubmit}>
           <div>
             <Select>
-              <SelectTrigger className="w-1/2">
+              <SelectTrigger className="w-1/2 cursor-pointer">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -76,13 +77,13 @@ export function PartnerFinance() {
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell className="font-medium text-center">
+                <TableCell className="font-medium text-center text-gray-500">
                   $ 0.00
                 </TableCell>
-                <TableCell className="text-center">$ 0</TableCell>
-                <TableCell className="text-center">$ 0</TableCell>
-                <TableCell className="text-center">$ 0</TableCell>
-                <TableCell className="text-center">$ 0</TableCell>
+                <TableCell className="text-center text-gray-500">$ 0</TableCell>
+                <TableCell className="text-center text-gray-500">$ 0</TableCell>
+                <TableCell className="text-center text-gray-500">$ 0</TableCell>
+                <TableCell className="text-center text-gray-500">$ 0</TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -124,18 +125,18 @@ export function PartnerFinance() {
             <Input type="text" placeholder="Enter your paypal address" />
             <Button className="cursor-pointer">Submit</Button>
           </div>
-          <div className="flex flex-row items-center gap-2 text-gray-700">
+          <div className="flex flex-row items-center gap-2 text-gray-500">
             <CircleCheck className="w-4" />
-            <p className="leading-7">PayPal Address</p>
+            <p className="leading-7 text-gray-500">PayPal Address</p>
           </div>
         </div>
         <div className="gap-2">
           <div className="w-1/2 flex flex-col gap-2">
             <Input type="file" placeholder="Upload your signed IRS form" />
           </div>
-          <div className="flex flex-row items-center gap-2 text-gray-700">
+          <div className="flex flex-row items-center gap-2 text-gray-500">
             <CircleCheck className="w-4" />
-            <p className="leading-7">
+            <p className="leading-7 text-gray-500">
               Download <span className="text-teal-400">IRS form</span>, sign it,
               scan it, and attach. For Non-US. Affiliates, download{" "}
               <span className="text-teal-400">Here.</span>
