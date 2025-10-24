@@ -46,6 +46,16 @@ export async function GET(request: Request) {
       // Then disconnect the WebSocket client
       connection.client.disconnect();
 
+      // Save any pending 1-minute bars before cleanup
+      try {
+        const { oneMinuteAggregator } = await import(
+          "@/lib/truedata/aggregator"
+        );
+        await oneMinuteAggregator.saveAllPendingBars();
+      } catch (error) {
+        console.error("Error saving pending bars during cleanup:", error);
+      }
+
       try {
         // Finally close the writer
         if (!writer.closed) {
@@ -97,7 +107,7 @@ export async function GET(request: Request) {
       // Take first 5 NSE equity symbols, sorted by token ID for consistency
       symbols = allSymbols
         .sort((a, b) => (a.TokenId < b.TokenId ? -1 : 1))
-        .slice(0, 5)
+        .slice(0, 49)
         .map((sym) => sym.Symbol);
 
       console.log("Using fetched symbols:", symbols);

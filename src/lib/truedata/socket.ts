@@ -1,4 +1,5 @@
 import WebSocket from "ws";
+import { oneMinuteAggregator, type TickData } from "./aggregator";
 
 export class TrueDataSocketClient {
   private ws: WebSocket | null = null;
@@ -50,6 +51,8 @@ export class TrueDataSocketClient {
             if (tickData) {
               // Store token to symbol mapping for bid/ask updates
               this.tokenToSymbolMap.set(tickData.tokenId, tickData.symbol);
+              // Send to aggregator for 1-minute bar creation
+              this.sendToAggregator(tickData);
               this.emit("tick", tickData);
             }
           });
@@ -65,6 +68,8 @@ export class TrueDataSocketClient {
           // Bid/Ask updates - map token back to symbol
           const bidAskData = this.parseBidAskData(parsed.bidask);
           if (bidAskData) {
+            // Send to aggregator for 1-minute bar updates
+            this.sendToAggregator(bidAskData);
             this.emit("tick", bidAskData);
           }
         } else if (message.startsWith('["bar"')) {
@@ -211,6 +216,30 @@ export class TrueDataSocketClient {
       close: parseFloat(prevClose) || 0,
       dataType: "trade",
     };
+  }
+
+  // Send tick data to 1-minute aggregator
+  private sendToAggregator(tickData: any): void {
+    // Only aggregate if ltp and timestamp are present
+    if (typeof tickData.ltp === "number" && tickData.timestamp) {
+      try {
+        const aggregatorTick: TickData = {
+          symbol: tickData.symbol,
+          timestamp: tickData.timestamp,
+          ltp: tickData.ltp,
+          volume: tickData.volume || 0,
+          high: tickData.high,
+          low: tickData.low,
+          open: tickData.open,
+        };
+        oneMinuteAggregator.processTick(aggregatorTick);
+      } catch (error) {
+        console.error("Error sending tick to aggregator:", error);
+      }
+    } else {
+      // Optionally log or ignore bid/ask-only updates
+      // console.log("Skipping aggregation for non-tick/bar data:", tickData);
+    }
   }
 
   on(event: string, handler: (data: any) => void) {
