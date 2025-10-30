@@ -104,10 +104,10 @@ export async function GET(request: Request) {
       );
       console.log("Total NSE equity symbols found:", allSymbols.length);
 
-      // Take first 5 NSE equity symbols, sorted by token ID for consistency
+      // Take first 50 NSE equity symbols, sorted by token ID for consistency
       symbols = allSymbols
         .sort((a, b) => (a.TokenId < b.TokenId ? -1 : 1))
-        .slice(0, 49)
+        .slice(0, 50)
         .map((sym) => sym.Symbol);
 
       console.log("Using fetched symbols:", symbols);
