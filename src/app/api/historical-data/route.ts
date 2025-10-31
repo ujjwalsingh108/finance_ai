@@ -1,7 +1,6 @@
 import axios from "axios";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getAllSymbols, getAuthToken } from "@/lib/truedata/api";
 
 // Force this route to be dynamic (not pre-rendered at build time)
 export const dynamic = "force-dynamic";
@@ -105,6 +104,7 @@ export async function POST(request: Request) {
   }
   let token: string;
   try {
+    const { getAuthToken } = await import("@/lib/truedata/api");
     token = await getAuthToken(user, pwd);
   } catch (err) {
     return withCORS(
@@ -116,8 +116,9 @@ export async function POST(request: Request) {
   }
   let symbols: string[] = [];
   try {
+    const { getAllSymbols } = await import("@/lib/truedata/api");
     const allSymbols = await getAllSymbols(user, pwd, "eq");
-    symbols = allSymbols.slice(0, 50).map((s) => s.Symbol);
+    symbols = allSymbols.slice(0, 50).map((s: any) => s.Symbol);
   } catch (err) {
     return withCORS(
       NextResponse.json(
