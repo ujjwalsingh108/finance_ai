@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { TrueDataSocketClient } from "@/lib/truedata/socket";
 import { TickMessage } from "@/types/ticks";
+import { getAllSymbols } from "@/lib/truedata/api";
 
 // Environment-safe credentials (set in .env)
 const user = process.env.TRUEDATA_USER;
@@ -12,8 +13,6 @@ if (!user || !pwd) {
     "TRUEDATA_USER and TRUEDATA_PASSWORD environment variables are required"
   );
 }
-
-import { getAllSymbols } from "@/lib/truedata/api";
 
 // Track active connections
 export const connections = new Map<
