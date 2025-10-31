@@ -1,0 +1,84 @@
+# GitHub Actions Workflow to Call Supabase Edge Function
+# This runs every 5 minutes during market hours (9:05 AM - 6:30 PM IST)
+# Place this file at: .github/workflows/auto-fetch-historical.yml
+
+name: Auto-Fetch Historical Data
+
+on:
+  schedule:
+    # Runs every 5 minutes during market hours (3:35 AM - 1:00 PM UTC = 9:05 AM - 6:30 PM IST)
+    - cron: '*/5 3-13 * * 1-5'  # Monday to Friday, every 5 minutes from 3:00-13:59 UTC
+  
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  fetch-historical-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check if within trading hours
+        id: check_time
+        run: |
+          # Get current time in IST
+          CURRENT_HOUR=$(TZ='Asia/Kolkata' date +'%H')
+          CURRENT_MINUTE=$(TZ='Asia/Kolkata' date +'%M')
+          CURRENT_DAY=$(TZ='Asia/Kolkata' date +'%u')  # 1=Monday, 7=Sunday
+          
+          echo "Current IST Hour: $CURRENT_HOUR"
+          echo "Current IST Minute: $CURRENT_MINUTE"
+          echo "Current Day: $CURRENT_DAY"
+          
+          # Check if it's a weekday (1-5)
+          if [ $CURRENT_DAY -gt 5 ]; then
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "reason=Weekend" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Check if within trading hours (9:05 AM to 6:30 PM IST)
+          if [ $CURRENT_HOUR -lt 9 ] || [ $CURRENT_HOUR -gt 18 ]; then
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "reason=Outside trading hours" >> $GITHUB_OUTPUT
+          elif [ $CURRENT_HOUR -eq 9 ] && [ $CURRENT_MINUTE -lt 5 ]; then
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "reason=Before 9:05 AM" >> $GITHUB_OUTPUT
+          elif [ $CURRENT_HOUR -eq 18 ] && [ $CURRENT_MINUTE -gt 30 ]; then
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "reason=After 6:30 PM" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "reason=Trading hours" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Call Supabase Edge Function
+        if: steps.check_time.outputs.should_run == 'true'
+        run: |
+          echo "Calling Edge Function at $(TZ='Asia/Kolkata' date)"
+          
+          RESPONSE=$(curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -d '{"trigger": "github_actions", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' \
+            -w "\nHTTP_STATUS:%{http_code}" \
+            -s \
+            "https://kowxpazskkigzwdwzwyq.supabase.co/functions/v1/auto-fetch-historical")
+          
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
+          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS/d')
+          
+          echo "Response Status: $HTTP_STATUS"
+          echo "Response Body: $BODY"
+          
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Edge Function call failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          
+          echo "✅ Edge Function executed successfully"
+
+      - name: Log skipped execution
+        if: steps.check_time.outputs.should_run == 'false'
+        run: |
+          echo "⏭️ Skipped: ${{ steps.check_time.outputs.reason }}"
+          echo "Current time (IST): $(TZ='Asia/Kolkata' date)"

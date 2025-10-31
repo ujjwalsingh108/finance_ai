@@ -96,11 +96,6 @@ export async function getAllSymbols(
             sym.Segment === "NSE_EQ" && sym.ExchCode === "NSE"
         );
 
-      console.log(
-        "Parsed NSE Equity symbols (first 5):",
-        JSON.stringify(symbols.slice(0, 5), null, 2)
-      );
-
       return symbols;
     }
 
