@@ -1,11 +1,11 @@
-// Force this route to be dynamic (not pre-rendered at build time)
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import { TrueDataSocketClient } from "@/lib/truedata/socket";
 import { TickMessage } from "@/types/ticks";
 import { getAllSymbols } from "@/lib/truedata/api";
+
+// Force this route to be dynamic (not pre-rendered at build time)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // Environment-safe credentials (set in .env)
 const user = process.env.TRUEDATA_USER;

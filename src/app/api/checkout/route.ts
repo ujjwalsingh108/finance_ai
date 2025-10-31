@@ -1,11 +1,11 @@
-// Force this route to be dynamic (not pre-rendered at build time)
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
 // app/api/checkout/route.ts
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+
+// Force this route to be dynamic (not pre-rendered at build time)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // PayU credentials
 const MERCHANT_KEY = process.env.PAYU_KEY!;

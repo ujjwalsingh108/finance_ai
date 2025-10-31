@@ -1,12 +1,12 @@
-// Force this route to be dynamic
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import * as XLSX from "xlsx";
 import AdmZip from "adm-zip";
 import path from "path";
+
+// Force this route to be dynamic (not pre-rendered at build time)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

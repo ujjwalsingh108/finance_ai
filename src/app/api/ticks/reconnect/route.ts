@@ -1,10 +1,10 @@
-// Force this route to be dynamic (not pre-rendered at build time)
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { connections } from "../route";
+
+// Force this route to be dynamic (not pre-rendered at build time)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {

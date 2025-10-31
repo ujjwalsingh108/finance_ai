@@ -1,11 +1,11 @@
-// Force this route to be dynamic (not pre-rendered at build time)
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
 import axios from "axios";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAllSymbols, getAuthToken } from "@/lib/truedata/api";
+
+// Force this route to be dynamic (not pre-rendered at build time)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
