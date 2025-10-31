@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import AdmZip from "adm-zip";
 import path from "path";
 
-// Force this route to be dynamic
+// Force this route to be dynamic (not pre-rendered at build time)
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
