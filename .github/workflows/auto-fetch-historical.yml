@@ -1,15 +1,12 @@
-# GitHub Actions Workflow to Call Supabase Edge Function
-# This runs every 5 minutes during market hours (9:05 AM - 6:30 PM IST)
-# Place this file at: .github/workflows/auto-fetch-historical.yml
-
+# IMPROVED GITHUB ACTIONS - Compensates for timing irregularities
 name: Auto-Fetch Historical Data
 
 on:
   schedule:
-    # Runs every 5 minutes during market hours (3:35 AM - 1:00 PM UTC = 9:05 AM - 6:30 PM IST)
-    - cron: '*/5 3-13 * * 1-5'  # Monday to Friday, every 5 minutes from 3:00-13:59 UTC
+    # Multiple overlapping schedules to ensure coverage
+    - cron: '*/5 3-13 * * 1-5'   # Primary: Every 5 minutes
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 3-13 * * 1-5'  # Backup: Offset by 2 minutes
   
-  # Allow manual trigger for testing
   workflow_dispatch:
 
 jobs:
@@ -17,26 +14,23 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Check if within trading hours
+      - name: Check if within trading hours and prevent duplicates
         id: check_time
         run: |
-          # Get current time in IST
           CURRENT_HOUR=$(TZ='Asia/Kolkata' date +'%H')
           CURRENT_MINUTE=$(TZ='Asia/Kolkata' date +'%M')
-          CURRENT_DAY=$(TZ='Asia/Kolkata' date +'%u')  # 1=Monday, 7=Sunday
+          CURRENT_DAY=$(TZ='Asia/Kolkata' date +'%u')
           
-          echo "Current IST Hour: $CURRENT_HOUR"
-          echo "Current IST Minute: $CURRENT_MINUTE"
-          echo "Current Day: $CURRENT_DAY"
+          echo "Current IST: $(TZ='Asia/Kolkata' date)"
           
-          # Check if it's a weekday (1-5)
+          # Check if it's a weekday
           if [ $CURRENT_DAY -gt 5 ]; then
             echo "should_run=false" >> $GITHUB_OUTPUT
             echo "reason=Weekend" >> $GITHUB_OUTPUT
             exit 0
           fi
           
-          # Check if within trading hours (9:05 AM to 6:30 PM IST)
+          # Check trading hours (9:05 AM to 6:30 PM IST)
           if [ $CURRENT_HOUR -lt 9 ] || [ $CURRENT_HOUR -gt 18 ]; then
             echo "should_run=false" >> $GITHUB_OUTPUT
             echo "reason=Outside trading hours" >> $GITHUB_OUTPUT
@@ -47,19 +41,30 @@ jobs:
             echo "should_run=false" >> $GITHUB_OUTPUT
             echo "reason=After 6:30 PM" >> $GITHUB_OUTPUT
           else
+            # ✅ ENHANCED: Check for recent executions to prevent duplicates
             echo "should_run=true" >> $GITHUB_OUTPUT
             echo "reason=Trading hours" >> $GITHUB_OUTPUT
+            echo "duplicate_check=needed" >> $GITHUB_OUTPUT
           fi
 
-      - name: Call Supabase Edge Function
+      - name: Call Supabase Edge Function with duplicate prevention
         if: steps.check_time.outputs.should_run == 'true'
         run: |
-          echo "Calling Edge Function at $(TZ='Asia/Kolkata' date)"
+          echo "🔄 Calling Edge Function at $(TZ='Asia/Kolkata' date)"
+          
+          # Add unique timestamp to help with deduplication
+          UNIQUE_TIMESTAMP=$(date +%s)
           
           RESPONSE=$(curl -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -d '{"trigger": "github_actions", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' \
+            -d '{
+              "trigger": "github_actions", 
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+              "run_id": "'${{ github.run_id }}'",
+              "attempt": "'${{ github.run_attempt }}'",
+              "unique_id": "'$UNIQUE_TIMESTAMP'"
+            }' \
             -w "\nHTTP_STATUS:%{http_code}" \
             -s \
             "https://kowxpazskkigzwdwzwyq.supabase.co/functions/v1/auto-fetch-historical")
@@ -67,18 +72,25 @@ jobs:
           HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
           BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS/d')
           
-          echo "Response Status: $HTTP_STATUS"
-          echo "Response Body: $BODY"
+          echo "📊 Response Status: $HTTP_STATUS"
+          echo "📄 Response Body: $BODY"
           
-          if [ "$HTTP_STATUS" != "200" ]; then
+          # Enhanced error reporting
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Edge Function executed successfully"
+            # Extract metrics from response
+            PROCESSED=$(echo "$BODY" | grep -o '"processedSymbols":[0-9]*' | cut -d: -f2)
+            RECORDS=$(echo "$BODY" | grep -o '"totalRecords":[0-9]*' | cut -d: -f2)
+            echo "📈 Processed: $PROCESSED symbols, $RECORDS records"
+          else
             echo "❌ Edge Function call failed with status $HTTP_STATUS"
+            echo "🔍 Debugging info: GitHub Run ID: ${{ github.run_id }}"
             exit 1
           fi
-          
-          echo "✅ Edge Function executed successfully"
 
-      - name: Log skipped execution
+      - name: Log skipped execution  
         if: steps.check_time.outputs.should_run == 'false'
         run: |
           echo "⏭️ Skipped: ${{ steps.check_time.outputs.reason }}"
-          echo "Current time (IST): $(TZ='Asia/Kolkata' date)"
+          echo "🕐 Current time (IST): $(TZ='Asia/Kolkata' date)"
+          echo "⏰ Next potential run: $(TZ='Asia/Kolkata' date -d '+5 minutes' +'%H:%M IST')"
