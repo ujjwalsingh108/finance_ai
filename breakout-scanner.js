@@ -1,14 +1,14 @@
 /**
  * 🚀 PRODUCTION BREAKOUT SCANNER FOR DIGITAL OCEAN
- * 
+ *
  * Scans top 250 NIFTY stocks using 6-criteria technical analysis
  * Integrates with your existing Supabase database schema
- * 
+ *
  * REQUIREMENTS:
  * - Node.js 18+
  * - Supabase client (@supabase/supabase-js)
  * - Running on DigitalOcean server
- * 
+ *
  * DEPLOYMENT:
  * 1. Upload to server: scp breakout-scanner.js user@server:/app/
  * 2. Install deps: npm install @supabase/supabase-js
@@ -16,8 +16,8 @@
  * 4. Start with PM2: pm2 start breakout-scanner.js
  */
 
-require('dotenv').config();
-const { createClient } = require('@supabase/supabase-js');
+require("dotenv").config();
+const { createClient } = require("@supabase/supabase-js");
 
 // =================================================================
 // 🔧 CONFIGURATION
@@ -27,22 +27,22 @@ const CONFIG = {
   // Supabase connection
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY, // Use service role for full access
-  
+
   // Scanner settings
   SCAN_INTERVAL_MS: 30000, // 30 seconds
   BATCH_SIZE: 10, // Process 10 stocks at a time
   TOP_N_STOCKS: 250, // Top 250 liquid NIFTY stocks
-  
+
   // Trading hours (IST) - 9:15 AM to 3:30 PM
   MARKET_OPEN_HOUR: 9,
   MARKET_OPEN_MINUTE: 15,
   MARKET_CLOSE_HOUR: 15,
   MARKET_CLOSE_MINUTE: 30,
-  
+
   // Signal thresholds
-  MIN_CONFIDENCE_TO_SAVE: 0.60, // Save signals with 60%+ confidence
+  MIN_CONFIDENCE_TO_SAVE: 0.6, // Save signals with 60%+ confidence
   MIN_CRITERIA_MET: 4, // Minimum 4 out of 6 criteria
-  
+
   // Technical analysis periods
   EMA_PERIOD: 20,
   RSI_PERIOD: 14,
@@ -67,18 +67,18 @@ class DatabaseClient {
   async getNifty250Symbols() {
     try {
       const { data, error } = await this.supabase
-        .from('symbols')
-        .select('symbol, name, sector')
-        .eq('exchange', 'NSE')
-        .in('type', ['EQ', 'EQUITY']) // Only equity stocks
+        .from("symbols")
+        .select("symbol, name, sector")
+        .eq("exchange", "NSE")
+        .in("type", ["EQ", "EQUITY"]) // Only equity stocks
         .limit(CONFIG.TOP_N_STOCKS);
 
       if (error) throw error;
-      
+
       console.log(`✅ Loaded ${data.length} NSE symbols from database`);
       return data;
     } catch (error) {
-      console.error('❌ Error loading symbols:', error);
+      console.error("❌ Error loading symbols:", error);
       throw error;
     }
   }
@@ -92,12 +92,12 @@ class DatabaseClient {
       cutoffDate.setDate(cutoffDate.getDate() - days);
 
       const { data, error } = await this.supabase
-        .from('historical_prices')
-        .select('*')
-        .eq('symbol', symbol)
-        .gte('date', cutoffDate.toISOString().split('T')[0])
-        .order('date', { ascending: true })
-        .order('time', { ascending: true });
+        .from("historical_prices")
+        .select("*")
+        .eq("symbol", symbol)
+        .gte("date", cutoffDate.toISOString().split("T")[0])
+        .order("date", { ascending: true })
+        .order("time", { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -113,11 +113,11 @@ class DatabaseClient {
   async getDailyCandles(symbol, days = 30) {
     try {
       const { data, error } = await this.supabase
-        .from('historical_prices')
-        .select('date, open, high, low, close, volume')
-        .eq('symbol', symbol)
-        .eq('time', '15:30') // Use 3:30 PM closing prices for daily candles
-        .order('date', { ascending: true })
+        .from("historical_prices")
+        .select("date, open, high, low, close, volume")
+        .eq("symbol", symbol)
+        .eq("time", "15:30") // Use 3:30 PM closing prices for daily candles
+        .order("date", { ascending: true })
         .limit(days);
 
       if (error) throw error;
@@ -134,24 +134,26 @@ class DatabaseClient {
   async saveBreakoutSignal(signal) {
     try {
       const { data, error } = await this.supabase
-        .from('breakout_signals')
-        .insert([{
-          symbol: signal.symbol,
-          signal_type: signal.signal_type,
-          probability: signal.probability,
-          criteria_met: signal.criteria_met,
-          daily_ema20: signal.daily_ema20,
-          fivemin_ema20: signal.fivemin_ema20,
-          rsi_value: signal.rsi_value,
-          volume_ratio: signal.volume_ratio,
-          predicted_direction: signal.predicted_direction,
-          target_price: signal.target_price,
-          stop_loss: signal.stop_loss,
-          confidence: signal.confidence,
-          current_price: signal.current_price,
-          created_by: 'system',
-          is_public: true
-        }])
+        .from("breakout_signals")
+        .insert([
+          {
+            symbol: signal.symbol,
+            signal_type: signal.signal_type,
+            probability: signal.probability,
+            criteria_met: signal.criteria_met,
+            daily_ema20: signal.daily_ema20,
+            fivemin_ema20: signal.fivemin_ema20,
+            rsi_value: signal.rsi_value,
+            volume_ratio: signal.volume_ratio,
+            predicted_direction: signal.predicted_direction,
+            target_price: signal.target_price,
+            stop_loss: signal.stop_loss,
+            confidence: signal.confidence,
+            current_price: signal.current_price,
+            created_by: "system",
+            is_public: true,
+          },
+        ])
         .select();
 
       if (error) throw error;
@@ -167,16 +169,16 @@ class DatabaseClient {
    */
   async saveScannerLog(success, data, config) {
     try {
-      await this.supabase
-        .from('auto_fetch_logs')
-        .insert([{
+      await this.supabase.from("auto_fetch_logs").insert([
+        {
           success,
           data,
           config,
-          executed_at: new Date().toISOString()
-        }]);
+          executed_at: new Date().toISOString(),
+        },
+      ]);
     } catch (error) {
-      console.error('❌ Error saving scanner log:', error);
+      console.error("❌ Error saving scanner log:", error);
     }
   }
 }
@@ -193,13 +195,14 @@ class TechnicalAnalyzer {
     if (prices.length < period) return null;
 
     const multiplier = 2 / (period + 1);
-    
+
     // Calculate initial SMA
-    let ema = prices.slice(0, period).reduce((sum, price) => sum + price, 0) / period;
+    let ema =
+      prices.slice(0, period).reduce((sum, price) => sum + price, 0) / period;
 
     // Calculate EMA
     for (let i = period; i < prices.length; i++) {
-      ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
+      ema = prices[i] * multiplier + ema * (1 - multiplier);
     }
 
     return ema;
@@ -217,8 +220,10 @@ class TechnicalAnalyzer {
     }
 
     const recentChanges = changes.slice(-period);
-    const gains = recentChanges.map(change => change > 0 ? change : 0);
-    const losses = recentChanges.map(change => change < 0 ? Math.abs(change) : 0);
+    const gains = recentChanges.map((change) => (change > 0 ? change : 0));
+    const losses = recentChanges.map((change) =>
+      change < 0 ? Math.abs(change) : 0
+    );
 
     const avgGain = gains.reduce((sum, gain) => sum + gain, 0) / period;
     const avgLoss = losses.reduce((sum, loss) => sum + loss, 0) / period;
@@ -226,7 +231,7 @@ class TechnicalAnalyzer {
     if (avgLoss === 0) return 100;
 
     const rs = avgGain / avgLoss;
-    const rsi = 100 - (100 / (1 + rs));
+    const rsi = 100 - 100 / (1 + rs);
 
     return rsi;
   }
@@ -252,12 +257,14 @@ class TechnicalAnalyzer {
     const nifty250Member = true;
 
     // 2. CRITERION 2: Trading above Daily 20 EMA
-    const dailyPrices = dailyCandles.map(candle => parseFloat(candle.close));
+    const dailyPrices = dailyCandles.map((candle) => parseFloat(candle.close));
     const dailyEMA20 = this.calculateEMA(dailyPrices, CONFIG.EMA_PERIOD);
     const aboveDailyEMA20 = dailyEMA20 ? currentPrice > dailyEMA20 : false;
 
     // 3. CRITERION 3: Trading above 5-minute 20 EMA
-    const fiveMinPrices = historicalData.map(candle => parseFloat(candle.close));
+    const fiveMinPrices = historicalData.map((candle) =>
+      parseFloat(candle.close)
+    );
     const fiveMinEMA20 = this.calculateEMA(fiveMinPrices, CONFIG.EMA_PERIOD);
     const above5minEMA20 = fiveMinEMA20 ? currentPrice > fiveMinEMA20 : false;
 
@@ -269,7 +276,7 @@ class TechnicalAnalyzer {
 
     // 6. CRITERION 6: RSI between 50 and 80
     const rsi = this.calculateRSI(fiveMinPrices, CONFIG.RSI_PERIOD);
-    const rsiInRange = rsi ? (rsi > 50 && rsi < 80) : false;
+    const rsiInRange = rsi ? rsi > 50 && rsi < 80 : false;
 
     // Calculate criteria met
     const criteriaResults = [
@@ -278,34 +285,36 @@ class TechnicalAnalyzer {
       above5minEMA20,
       volumeCondition,
       openPriceCondition,
-      rsiInRange
+      rsiInRange,
     ];
-    
+
     const criteriaMet = criteriaResults.filter(Boolean).length;
     const probability = criteriaMet / 6;
 
     // Determine signal type
     let signalType, predictedDirection;
-    
+
     if (criteriaMet >= 5) {
-      signalType = 'BULLISH_BREAKOUT';
-      predictedDirection = 'UP';
+      signalType = "BULLISH_BREAKOUT";
+      predictedDirection = "UP";
     } else if (criteriaMet <= 2) {
-      signalType = 'BEARISH_BREAKDOWN';
-      predictedDirection = 'DOWN';
+      signalType = "BEARISH_BREAKDOWN";
+      predictedDirection = "DOWN";
     } else {
-      signalType = 'NEUTRAL';
-      predictedDirection = 'SIDEWAYS';
+      signalType = "NEUTRAL";
+      predictedDirection = "SIDEWAYS";
     }
 
     // Calculate target and stop loss
-    const targetPrice = predictedDirection === 'UP' 
-      ? currentPrice * 1.02  // 2% target
-      : currentPrice * 0.98;
-      
-    const stopLoss = predictedDirection === 'UP'
-      ? currentPrice * 0.99  // 1% stop loss
-      : currentPrice * 1.01;
+    const targetPrice =
+      predictedDirection === "UP"
+        ? currentPrice * 1.02 // 2% target
+        : currentPrice * 0.98;
+
+    const stopLoss =
+      predictedDirection === "UP"
+        ? currentPrice * 0.99 // 1% stop loss
+        : currentPrice * 1.01;
 
     // Calculate volume ratio
     const volumeRatio = this.calculateVolumeRatio(historicalData);
@@ -324,7 +333,7 @@ class TechnicalAnalyzer {
       stop_loss: parseFloat(stopLoss.toFixed(2)),
       confidence: parseFloat(probability.toFixed(2)),
       current_price: parseFloat(currentPrice.toFixed(2)),
-      
+
       // Additional info for logging
       criteria_details: {
         nifty250Member,
@@ -332,8 +341,8 @@ class TechnicalAnalyzer {
         above5minEMA20,
         volumeCondition,
         openPriceCondition,
-        rsiInRange
-      }
+        rsiInRange,
+      },
     };
   }
 
@@ -344,8 +353,8 @@ class TechnicalAnalyzer {
     try {
       // Group by date to get daily volumes
       const dailyVolumes = {};
-      
-      historicalData.forEach(candle => {
+
+      historicalData.forEach((candle) => {
         const date = candle.date;
         if (!dailyVolumes[date]) {
           dailyVolumes[date] = 0;
@@ -354,17 +363,17 @@ class TechnicalAnalyzer {
       });
 
       const volumes = Object.values(dailyVolumes);
-      
+
       if (volumes.length < 4) return false; // Need at least 4 days
 
       const last3Days = volumes.slice(-4, -1); // Get last 3 days (excluding today)
       const previousDay = volumes[volumes.length - 2]; // Previous day volume
-      
+
       const avg3Day = last3Days.reduce((sum, vol) => sum + vol, 0) / 3;
-      
+
       return avg3Day <= previousDay;
     } catch (error) {
-      console.error('Error calculating volume condition:', error);
+      console.error("Error calculating volume condition:", error);
       return false;
     }
   }
@@ -375,8 +384,8 @@ class TechnicalAnalyzer {
   calculateVolumeRatio(historicalData) {
     try {
       const dailyVolumes = {};
-      
-      historicalData.forEach(candle => {
+
+      historicalData.forEach((candle) => {
         const date = candle.date;
         if (!dailyVolumes[date]) {
           dailyVolumes[date] = 0;
@@ -385,12 +394,14 @@ class TechnicalAnalyzer {
       });
 
       const volumes = Object.values(dailyVolumes);
-      
+
       if (volumes.length < 2) return null;
 
       const currentVolume = volumes[volumes.length - 1];
-      const avgVolume = volumes.slice(0, -1).reduce((sum, vol) => sum + vol, 0) / (volumes.length - 1);
-      
+      const avgVolume =
+        volumes.slice(0, -1).reduce((sum, vol) => sum + vol, 0) /
+        (volumes.length - 1);
+
       return avgVolume > 0 ? currentVolume / avgVolume : null;
     } catch (error) {
       return null;
@@ -415,7 +426,7 @@ class BreakoutScanner {
    * Initialize scanner
    */
   async initialize() {
-    console.log('🚀 Initializing Breakout Scanner...');
+    console.log("🚀 Initializing Breakout Scanner...");
     console.log(`📊 Configuration:
       - Scan Interval: ${CONFIG.SCAN_INTERVAL_MS / 1000}s
       - Batch Size: ${CONFIG.BATCH_SIZE}
@@ -426,15 +437,15 @@ class BreakoutScanner {
     try {
       // Load NIFTY 250 symbols from database
       this.symbols = await this.db.getNifty250Symbols();
-      
+
       if (this.symbols.length === 0) {
-        throw new Error('No symbols loaded from database');
+        throw new Error("No symbols loaded from database");
       }
 
       console.log(`✅ Scanner initialized with ${this.symbols.length} symbols`);
       return true;
     } catch (error) {
-      console.error('❌ Initialization failed:', error);
+      console.error("❌ Initialization failed:", error);
       return false;
     }
   }
@@ -444,8 +455,10 @@ class BreakoutScanner {
    */
   isMarketOpen() {
     const now = new Date();
-    const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    
+    const istTime = new Date(
+      now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+    );
+
     const hour = istTime.getHours();
     const minute = istTime.getMinutes();
     const day = istTime.getDay();
@@ -456,10 +469,13 @@ class BreakoutScanner {
     }
 
     // Check market hours (9:15 AM - 3:30 PM IST)
-    const marketOpen = hour > CONFIG.MARKET_OPEN_HOUR || 
-                      (hour === CONFIG.MARKET_OPEN_HOUR && minute >= CONFIG.MARKET_OPEN_MINUTE);
-    const marketClose = hour < CONFIG.MARKET_CLOSE_HOUR || 
-                       (hour === CONFIG.MARKET_CLOSE_HOUR && minute <= CONFIG.MARKET_CLOSE_MINUTE);
+    const marketOpen =
+      hour > CONFIG.MARKET_OPEN_HOUR ||
+      (hour === CONFIG.MARKET_OPEN_HOUR && minute >= CONFIG.MARKET_OPEN_MINUTE);
+    const marketClose =
+      hour < CONFIG.MARKET_CLOSE_HOUR ||
+      (hour === CONFIG.MARKET_CLOSE_HOUR &&
+        minute <= CONFIG.MARKET_CLOSE_MINUTE);
 
     return marketOpen && marketClose;
   }
@@ -469,20 +485,22 @@ class BreakoutScanner {
    */
   async scanAllStocks() {
     if (this.isScanning) {
-      console.log('⏭️  Scan already in progress, skipping...');
+      console.log("⏭️  Scan already in progress, skipping...");
       return;
     }
 
     if (!this.isMarketOpen()) {
-      console.log('🔒 Market is closed, skipping scan');
+      console.log("🔒 Market is closed, skipping scan");
       return;
     }
 
     this.isScanning = true;
     this.scanCount++;
-    
+
     const scanStartTime = Date.now();
-    console.log(`\n🔍 Starting Scan #${this.scanCount} at ${new Date().toISOString()}`);
+    console.log(
+      `\n🔍 Starting Scan #${this.scanCount} at ${new Date().toISOString()}`
+    );
 
     let processedCount = 0;
     let signalCount = 0;
@@ -492,49 +510,61 @@ class BreakoutScanner {
       // Process stocks in batches
       for (let i = 0; i < this.symbols.length; i += CONFIG.BATCH_SIZE) {
         const batch = this.symbols.slice(i, i + CONFIG.BATCH_SIZE);
-        
+
         const batchPromises = batch.map(async (symbolData) => {
           try {
             const symbol = symbolData.symbol;
-            
+
             // Fetch historical data
             const [historicalData, dailyCandles] = await Promise.all([
               this.db.getHistoricalData(symbol, CONFIG.VOLUME_LOOKBACK_DAYS),
-              this.db.getDailyCandles(symbol, 30)
+              this.db.getDailyCandles(symbol, 30),
             ]);
 
             // Analyze stock
-            const signal = this.analyzer.analyzeStock(symbol, historicalData, dailyCandles);
-            
+            const signal = this.analyzer.analyzeStock(
+              symbol,
+              historicalData,
+              dailyCandles
+            );
+
             processedCount++;
 
             // Save high-confidence signals
-            if (signal && 
-                signal.probability >= CONFIG.MIN_CONFIDENCE_TO_SAVE && 
-                signal.criteria_met >= CONFIG.MIN_CRITERIA_MET) {
-              
+            if (
+              signal &&
+              signal.probability >= CONFIG.MIN_CONFIDENCE_TO_SAVE &&
+              signal.criteria_met >= CONFIG.MIN_CRITERIA_MET
+            ) {
               await this.db.saveBreakoutSignal(signal);
               signals.push(signal);
               signalCount++;
-              
-              console.log(`  ✅ ${symbol}: ${signal.signal_type} (${(signal.probability * 100).toFixed(0)}% confidence)`);
+
+              console.log(
+                `  ✅ ${symbol}: ${signal.signal_type} (${(
+                  signal.probability * 100
+                ).toFixed(0)}% confidence)`
+              );
             }
 
             return signal;
           } catch (error) {
-            console.error(`  ❌ Error processing ${symbolData.symbol}:`, error.message);
+            console.error(
+              `  ❌ Error processing ${symbolData.symbol}:`,
+              error.message
+            );
             return null;
           }
         });
 
         await Promise.all(batchPromises);
-        
+
         // Small delay between batches to avoid overwhelming database
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       const scanDuration = ((Date.now() - scanStartTime) / 1000).toFixed(2);
-      
+
       console.log(`\n✅ Scan #${this.scanCount} Complete:
         - Processed: ${processedCount}/${this.symbols.length} stocks
         - Signals Generated: ${signalCount}
@@ -542,22 +572,29 @@ class BreakoutScanner {
       `);
 
       // Save scan log
-      await this.db.saveScannerLog(true, {
-        scan_number: this.scanCount,
-        signals_generated: signalCount,
-        stocks_processed: processedCount,
-        duration_seconds: parseFloat(scanDuration),
-        timestamp: new Date().toISOString()
-      }, CONFIG);
-
+      await this.db.saveScannerLog(
+        true,
+        {
+          scan_number: this.scanCount,
+          signals_generated: signalCount,
+          stocks_processed: processedCount,
+          duration_seconds: parseFloat(scanDuration),
+          timestamp: new Date().toISOString(),
+        },
+        CONFIG
+      );
     } catch (error) {
-      console.error('❌ Scan failed:', error);
-      
-      await this.db.saveScannerLog(false, {
-        error: error.message,
-        scan_number: this.scanCount,
-        timestamp: new Date().toISOString()
-      }, CONFIG);
+      console.error("❌ Scan failed:", error);
+
+      await this.db.saveScannerLog(
+        false,
+        {
+          error: error.message,
+          scan_number: this.scanCount,
+          timestamp: new Date().toISOString(),
+        },
+        CONFIG
+      );
     } finally {
       this.isScanning = false;
     }
@@ -598,9 +635,9 @@ async function main() {
 
   // Validate environment variables
   if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_SERVICE_KEY) {
-    console.error('❌ Missing required environment variables:');
-    console.error('   - SUPABASE_URL');
-    console.error('   - SUPABASE_SERVICE_ROLE_KEY');
+    console.error("❌ Missing required environment variables:");
+    console.error("   - SUPABASE_URL");
+    console.error("   - SUPABASE_SERVICE_ROLE_KEY");
     process.exit(1);
   }
 
@@ -609,7 +646,7 @@ async function main() {
   const initialized = await scanner.initialize();
 
   if (!initialized) {
-    console.error('❌ Scanner initialization failed');
+    console.error("❌ Scanner initialization failed");
     process.exit(1);
   }
 
@@ -617,18 +654,18 @@ async function main() {
   scanner.start();
 
   // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\n\n🛑 Shutting down scanner...');
-    console.log('📊 Final stats:');
+  process.on("SIGINT", async () => {
+    console.log("\n\n🛑 Shutting down scanner...");
+    console.log("📊 Final stats:");
     console.log(`   - Total scans: ${scanner.scanCount}`);
-    console.log('   - Status: Stopped');
+    console.log("   - Status: Stopped");
     process.exit(0);
   });
 }
 
 // Run the scanner
-main().catch(error => {
-  console.error('❌ Fatal error:', error);
+main().catch((error) => {
+  console.error("❌ Fatal error:", error);
   process.exit(1);
 });
 
