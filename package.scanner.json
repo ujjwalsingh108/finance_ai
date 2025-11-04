@@ -1,0 +1,39 @@
+{
+  "name": "breakout-scanner",
+  "version": "1.0.0",
+  "description": "Real-time breakout prediction scanner for NIFTY stocks using 6-criteria technical analysis",
+  "main": "breakout-scanner.js",
+  "scripts": {
+    "start": "node breakout-scanner.js",
+    "dev": "node breakout-scanner.js",
+    "pm2:start": "pm2 start breakout-scanner.js --name breakout-scanner",
+    "pm2:stop": "pm2 stop breakout-scanner",
+    "pm2:restart": "pm2 restart breakout-scanner",
+    "pm2:logs": "pm2 logs breakout-scanner",
+    "pm2:monit": "pm2 monit",
+    "pm2:delete": "pm2 delete breakout-scanner",
+    "test": "node -e \"console.log('Testing environment...'); require('dotenv').config(); console.log('Supabase URL:', process.env.SUPABASE_URL ? '✅ Set' : '❌ Missing'); console.log('Service Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ Set' : '❌ Missing');\""
+  },
+  "keywords": [
+    "breakout",
+    "stock-scanner",
+    "technical-analysis",
+    "nifty",
+    "trading",
+    "supabase"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/finance_ai.git"
+  }
+}

@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
-import { Plan } from "@/types/PricingPlan";
+import { Plan } from "@/types/pricing-plan";
 
 export function PricingCard({
   plan,

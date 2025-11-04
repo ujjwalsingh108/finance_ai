@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Presentation, Settings, X } from "lucide-react";
+import { Home, Settings, X, Zap } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const links = [
   { label: "Home", href: "/home", icon: <Home /> },
-  { label: "AI Screener", href: "/screener", icon: <Presentation /> },
+  { label: "AI Screener", href: "/screener", icon: <Zap /> },
 ];
 
 const settingsLink = {
