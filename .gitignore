@@ -33,6 +33,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# deployment script droplet server
+deploy.sh
+package.scanner.json
+TRUEDATA-SETUP.md
+WEBSOCKET-SETUP.md
+
+
 # vercel
 .vercel
 
