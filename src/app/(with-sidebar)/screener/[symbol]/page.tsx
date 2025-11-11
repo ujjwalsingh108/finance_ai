@@ -182,7 +182,7 @@ export default function StockStrategyPage() {
           ).toFixed(1)
         : "0",
     recentSignals: signals.filter(
-      (s) => new Date(s.scan_timestamp) > new Date(Date.now() - 60 * 60 * 1000)
+      (s) => new Date(s.created_at) > new Date(Date.now() - 60 * 60 * 1000)
     ).length,
   };
 
@@ -342,7 +342,7 @@ export default function StockStrategyPage() {
                     <div>
                       <span className="font-semibold">{signal.symbol}</span>
                       <div className="text-sm text-gray-500">
-                        {new Date(signal.scan_timestamp).toLocaleTimeString()}
+                        {new Date(signal.created_at).toLocaleTimeString()}
                       </div>
                     </div>
                   </div>

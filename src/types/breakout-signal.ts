@@ -14,6 +14,6 @@ export type BreakoutSignal = {
   target_price: number;
   stop_loss: number;
   confidence_score: number;
-  scan_timestamp: string;
+  created_at: string;
   market_session: string;
 };

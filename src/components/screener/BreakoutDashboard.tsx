@@ -171,7 +171,7 @@ export function BreakoutSignalCard({ signal }: BreakoutSignalCardProps) {
       {/* Signal Timestamp */}
       <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
         <Clock className="w-3 h-3" />
-        Signal generated: {new Date(signal.scan_timestamp).toLocaleString()}
+        Signal generated: {new Date(signal.created_at).toLocaleString()}
       </div>
     </Card>
   );
