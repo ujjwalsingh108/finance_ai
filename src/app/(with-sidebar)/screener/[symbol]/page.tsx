@@ -1,14 +1,190 @@
 "use client";
-import React from "react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import React, { useEffect, useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useRouter, useParams } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { BreakoutSignal } from "@/types/breakout-signal";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Activity,
+  Target,
+  AlertTriangle,
+  RefreshCw,
+  Zap,
+  ArrowUpRight,
+  ArrowDownRight,
+  BarChart3,
+} from "lucide-react";
+import { BreakoutSignalCard } from "@/components/screener/BreakoutDashboard";
 
 export default function StockStrategyPage() {
   const router = useRouter();
-  // TODO: Fetch stock data for params.symbol
+  const params = useParams();
+  const [signals, setSignals] = useState<BreakoutSignal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [selectedStrategy, setSelectedStrategy] = useState<string>("");
+
+  const supabase = createClient();
+
+  // Initialize strategy based on URL parameter
+  useEffect(() => {
+    if (params.symbol) {
+      setSelectedStrategy(decodeURIComponent(params.symbol as string));
+    }
+  }, [params.symbol]);
+
+  // Load breakout signals based on strategy
+  const loadBreakoutSignals = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // Get signals from last 4 hours for the selected strategy type
+      const { data: signalsData, error } = await supabase
+        .from("breakout_signals")
+        .select("*")
+        .gte(
+          "created_at",
+          new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+        )
+        .gte("probability", 0.6) // Show signals with 60%+ confidence
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error("Error loading signals:", error);
+        return;
+      }
+
+      if (signalsData) {
+        // Filter signals based on strategy type
+        let filteredSignals = signalsData;
+
+        if (selectedStrategy.toLowerCase().includes("bullish")) {
+          filteredSignals = signalsData.filter(
+            (s) => s.signal_type === "BULLISH_BREAKOUT"
+          );
+        } else if (selectedStrategy.toLowerCase().includes("bearish")) {
+          filteredSignals = signalsData.filter(
+            (s) => s.signal_type === "BEARISH_BREAKDOWN"
+          );
+        } else if (selectedStrategy.toLowerCase().includes("breakout")) {
+          filteredSignals = signalsData.filter(
+            (s) => s.signal_type !== "NEUTRAL"
+          );
+        }
+
+        setSignals(filteredSignals);
+      }
+    } catch (error) {
+      console.error("Error loading breakout signals:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [supabase, selectedStrategy]);
+
+  // Set up real-time subscription for new signals
+  useEffect(() => {
+    loadBreakoutSignals();
+
+    const subscription = supabase
+      .channel("strategy_signals_realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "breakout_signals",
+          filter: "probability.gte.0.6",
+        },
+        (payload) => {
+          const newSignal = payload.new as BreakoutSignal;
+
+          // Filter based on current strategy
+          let shouldAdd = true;
+          if (
+            selectedStrategy.toLowerCase().includes("bullish") &&
+            newSignal.signal_type !== "BULLISH_BREAKOUT"
+          ) {
+            shouldAdd = false;
+          } else if (
+            selectedStrategy.toLowerCase().includes("bearish") &&
+            newSignal.signal_type !== "BEARISH_BREAKDOWN"
+          ) {
+            shouldAdd = false;
+          } else if (
+            selectedStrategy.toLowerCase().includes("breakout") &&
+            newSignal.signal_type === "NEUTRAL"
+          ) {
+            shouldAdd = false;
+          }
+
+          if (shouldAdd) {
+            setSignals((prev) => [newSignal, ...prev].slice(0, 50));
+          }
+        }
+      )
+      .subscribe((status) => {
+        setIsConnected(status === "SUBSCRIBED");
+      });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase, loadBreakoutSignals, selectedStrategy]);
+
+  // Helper functions
+  const getSignalIcon = (signalType: string) => {
+    switch (signalType) {
+      case "BULLISH_BREAKOUT":
+        return <ArrowUpRight className="w-5 h-5 text-green-500" />;
+      case "BEARISH_BREAKDOWN":
+        return <ArrowDownRight className="w-5 h-5 text-red-500" />;
+      default:
+        return <BarChart3 className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const getSignalColor = (signalType: string) => {
+    switch (signalType) {
+      case "BULLISH_BREAKOUT":
+        return "border-green-200 bg-green-50";
+      case "BEARISH_BREAKDOWN":
+        return "border-red-200 bg-red-50";
+      default:
+        return "border-gray-200 bg-gray-50";
+    }
+  };
+
+  const getStrategyDescription = (strategy: string) => {
+    const lowerStrategy = strategy.toLowerCase();
+    if (lowerStrategy.includes("bullish")) {
+      return "Stocks showing strong upward momentum with bullish breakout patterns. All 6 technical criteria favor upward price movement.";
+    } else if (lowerStrategy.includes("bearish")) {
+      return "Stocks showing downward pressure with bearish breakdown patterns. Technical indicators suggest potential price decline.";
+    } else if (lowerStrategy.includes("breakout")) {
+      return "Stocks at critical breakout points with high probability directional moves. Advanced technical screening using 6-criteria analysis.";
+    }
+    return "AI-powered stock analysis using 6-criteria technical screening for optimal entry and exit points.";
+  };
+
+  // Calculate strategy stats
+  const strategyStats = {
+    totalSignals: signals.length,
+    highConfidenceSignals: signals.filter((s) => s.probability >= 0.8).length,
+    avgConfidence:
+      signals.length > 0
+        ? (
+            (signals.reduce((sum, s) => sum + s.probability, 0) /
+              signals.length) *
+            100
+          ).toFixed(1)
+        : "0",
+    recentSignals: signals.filter(
+      (s) => new Date(s.created_at) > new Date(Date.now() - 60 * 60 * 1000)
+    ).length,
+  };
 
   return (
     <Card className="min-h-screen bg-background text-foreground mt-6 md:mt-6 p-4 md:p-8 rounded shadow-none">
@@ -25,172 +201,165 @@ export default function StockStrategyPage() {
           <Button variant="default">Get Today&apos;s picks</Button>
         </div>
       </div>
-      <h1 className="text-2xl md:text-2xl font-bold flex items-center gap-3 mb-2">
-        <span className="inline-block bg-yellow-500 rounded-full p-2">
-          <svg
-            width="12"
-            height="12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-black"
-          >
-            <path d="M13 2v8h8" />
-            <path d="M3 12a9 9 0 1 0 9-9" />
-          </svg>
-        </span>
-        AI Stock Picker Strategy
-      </h1>
-      <div className="text-base md:text-md mb-4">
-        <p>
-          <b>Every morning at 8 AM EST</b>, check the AI-recommended stocks.
-        </p>
-        <p>
-          <b>Before market open</b>, <span className="text-green-400">buy</span>{" "}
-          (bullish) or <span className="text-red-400">short</span> (bearish),
-          allocating 20% of funds per stock.
-        </p>
-        <p>
-          <b>Before market close</b>,{" "}
-          <span className="text-green-400">sell</span> (bullish) or{" "}
-          <span className="text-red-400">buy back</span> (bearish) to complete
-          the trade! (exclusively available to Pro, Max and Expert Plan
-          subscribers.)
-        </p>
-        <p>
-          Each stock includes a <b>stop-loss</b> price; Exit at the stop-loss
-          price if triggered.
-        </p>
-      </div>
-      <h2 className="text-2xl font-bold mb-4">Today&apos;s Top Picks</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-        {/* Example Card - Replace with dynamic data */}
-        <Card className="flex flex-col gap-3 rounded-xl p-4 md:p-6 shadow-lg bg-background">
-          <div className="flex items-center justify-between mb-2 w-full">
-            <div className="flex items-center gap-2">
-              {/* Avatar with logo and stock name */}
-              <div className="flex items-center gap-2">
-                <span className="inline-block">
-                  {/* Replace with dynamic src for real data */}
-                  <Image
-                    src="/images/aigoat_logo_trans.svg"
-                    alt="ESTC Logo"
-                    width={32}
-                    height={32}
-                    className="rounded-full bg-white"
-                  />
-                </span>
-                <span className="font-bold text-xs md:text-base text-black dark:text-white">
-                  ESTC.N
-                </span>
-              </div>
-            </div>
-            <span className="text-green-400 font-bold text-xs md:text-base">
-              Bullish
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+          <span className="inline-block bg-blue-500 rounded-full p-2">
+            <Zap className="w-5 h-5 text-white" />
+          </span>
+          {selectedStrategy || "Breakout Strategy"}
+        </h1>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                isConnected ? "bg-green-500" : "bg-red-500"
+              }`}
+            />
+            <span className="text-sm text-gray-600">
+              {isConnected ? "Live Updates" : "Disconnected"}
             </span>
           </div>
-          <div className="text-xs md:text-sm text-gray-600 mb-2 text-justify">
-            Elastic (ESTC) demonstrates bullish potential with increased revenue
-            guidance ($1.697B-$1.703B for FY26), ...
+
+          <Button
+            onClick={loadBreakoutSignals}
+            disabled={isLoading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="text-base md:text-md mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <p className="text-gray-700 mb-3">
+          {getStrategyDescription(selectedStrategy)}
+        </p>
+        <div className="flex flex-wrap gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>
+              <b>6-Criteria Analysis:</b> NIFTY 500, EMA, Volume, RSI screening
+            </span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 mb-2">
-            <div>
-              <div className="text-xs text-gray-500">Entry</div>
-              <div className="font-bold">$88.92</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Stop Loss</div>
-              <div className="font-bold flex items-center gap-1">
-                $86.75{" "}
-                <Badge className="px-1 py-0 text-xs bg-green-500 text-white">
-                  <span>&#10003;</span>
-                </Badge>
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Current</div>
-              <div className="font-bold">$86.48</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Return</div>
-              <div className="font-bold text-red-400">-2.44%</div>
-            </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>
+              <b>Real-time Updates:</b> Every 30 seconds during market hours
+            </span>
           </div>
-          <Card className="rounded-lg p-2 mt-2 bg-background shadow-lg">
-            {/* Example Chart - Replace with real chart */}
-            <svg width="100%" height="60" viewBox="0 0 200 60">
-              <polyline
-                points="0,40 20,35 40,30 60,25 80,30 100,35 120,30 140,25 160,30 180,35 200,30"
-                fill="none"
-                stroke="#00FFD0"
-                strokeWidth="2"
-              />
-              <circle cx="100" cy="35" r="4" fill="#00FFD0" />
-              <path
-                d="M110,25 Q120,10 130,25"
-                stroke="#00FFD0"
-                strokeWidth="2"
-                fill="none"
-                markerEnd="url(#arrowhead)"
-              />
-              <defs>
-                <marker
-                  id="arrowhead"
-                  markerWidth="10"
-                  markerHeight="7"
-                  refX="0"
-                  refY="3.5"
-                  orient="auto"
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+            <span>
+              <b>Smart Alerts:</b> High-confidence signals with stop-loss
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Strategy Statistics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <Card className="text-center p-4">
+          <div className="text-xs text-gray-400 mb-1">Total Signals (4h)</div>
+          <div className="text-2xl font-bold text-blue-600">
+            {strategyStats.totalSignals}
+          </div>
+        </Card>
+        <Card className="text-center p-4">
+          <div className="text-xs text-gray-400 mb-1">High Confidence</div>
+          <div className="text-2xl font-bold text-green-600">
+            {strategyStats.highConfidenceSignals}
+          </div>
+        </Card>
+        <Card className="text-center p-4">
+          <div className="text-xs text-gray-400 mb-1">Avg Confidence</div>
+          <div className="text-2xl font-bold text-gray-700">
+            {strategyStats.avgConfidence}%
+          </div>
+        </Card>
+        <Card className="text-center p-4">
+          <div className="text-xs text-gray-400 mb-1">Recent (1h)</div>
+          <div className="text-2xl font-bold text-orange-600">
+            {strategyStats.recentSignals}
+          </div>
+        </Card>
+      </div>
+      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+        <Target className="w-6 h-6 text-blue-600" />
+        Live Breakout Signals
+        <Badge variant="outline" className="ml-2">
+          {signals.length} active
+        </Badge>
+      </h2>
+
+      {/* Breakout Signals Grid */}
+      <div className="mb-8">
+        {isLoading ? (
+          <div className="text-center py-12">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-600">Loading breakout signals...</p>
+          </div>
+        ) : signals.length === 0 ? (
+          <div className="text-center py-12">
+            <AlertTriangle className="w-8 h-8 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-600">
+              No breakout signals found for this strategy
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Signals are generated every 30 seconds during market hours
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {signals.slice(0, 12).map((signal, index) => (
+              <BreakoutSignalCard key={signal.id || index} signal={signal} />
+            ))}
+          </div>
+        )}
+      </div>
+      {/* Real-time Signal Feed */}
+      {signals.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-600" />
+              Latest Signal Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 max-h-80 overflow-y-auto">
+              {signals.slice(0, 8).map((signal, index) => (
+                <div
+                  key={signal.id || index}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
-                  <polygon points="0 0, 10 3.5, 0 7" fill="#00FFD0" />
-                </marker>
-              </defs>
-            </svg>
-          </Card>
+                  <div className="flex items-center gap-3">
+                    {getSignalIcon(signal.signal_type)}
+                    <div>
+                      <span className="font-semibold">{signal.symbol}</span>
+                      <div className="text-sm text-gray-500">
+                        {new Date(signal.created_at).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">
+                      ₹{signal.current_price?.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {(signal.probability * 100).toFixed(1)}% confidence
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
         </Card>
-        {/* ...repeat for other cards... */}
-      </div>
-      <h2 className="text-2xl font-bold mb-4">Strategy Performance</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-        <Card className="rounded-xl p-4 md:p-6 shadow-lg text-center bg-background">
-          <div className="text-xs text-gray-400 mb-1">Total Return</div>
-          <div className="text-xl md:text-3xl font-bold text-green-400">
-            258.74%
-          </div>
-        </Card>
-        <Card className="rounded-xl p-4 md:p-6 shadow-lg text-center bg-background">
-          <div className="text-xs text-gray-400 mb-1">Annualized Return</div>
-          <div className="text-xl md:text-3xl font-bold text-green-400">
-            238.50%
-          </div>
-        </Card>
-        <Card className="rounded-xl p-4 md:p-6 shadow-lg text-center bg-background">
-          <div className="text-xs text-gray-400 mb-1">Maximum Drawdown</div>
-          <div className="text-xl md:text-3xl font-bold text-red-400">
-            -10.78%
-          </div>
-        </Card>
-        <Card className="rounded-xl p-4 md:p-6 shadow-lg text-center bg-background">
-          <div className="text-xs text-gray-400 mb-1">Sharpe</div>
-          <div className="text-xl md:text-3xl font-bold text-gray-500">
-            3.66
-          </div>
-        </Card>
-      </div>
-      <Card className="rounded-lg p-2 shadow-lg md:p-4 bg-background">
-        {/* Example Performance Chart - Replace with real chart */}
-        <svg width="100%" height="120" viewBox="0 0 400 120">
-          <polyline
-            points="0,100 50,90 100,80 150,70 200,60 250,80 300,100 350,110 400,100"
-            fill="none"
-            stroke="#00FFD0"
-            strokeWidth="3"
-          />
-          <circle cx="350" cy="110" r="6" fill="#00FFD0" />
-        </svg>
-      </Card>
+      )}
     </Card>
   );
 }
