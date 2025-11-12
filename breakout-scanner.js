@@ -1,26 +1,3 @@
-/**
- * 🚀 ENHANCED BREAKOUT SCANNER WITH WEBSOCKET TICK-BY-TICK DATA
- *
- * Combines historical 5-min data with real-time tick data for:
- * - Earlier breakout detection (before 5-min candle closes)
- * - More accurate real-time EMA/RSI calculations
- * - Instant signal generation on breakout confirmation
- *
- * ARCHITECTURE:
- * 1. Load historical 1-day 5-min data from Supabase
- * 2. Subscribe to WebSocket tick data for all 250 stocks
- * 3. Aggregate ticks into current 5-min candle
- * 4. Merge current candle with historical data
- * 5. Recalculate EMA/RSI on every significant price move
- * 6. Trigger signals immediately when criteria met
- *
- * REQUIREMENTS:
- * - Node.js 18+
- * - ws (WebSocket client): npm install ws
- * - @supabase/supabase-js
- * - Real-time market data feed (e.g., Zerodha Kite Connect, IIFL, Angel One)
- */
-
 require("dotenv").config();
 const { createClient } = require("@supabase/supabase-js");
 const WebSocket = require("ws");
@@ -28,6 +5,61 @@ const WebSocket = require("ws");
 // =================================================================
 // 🔧 CONFIGURATION
 // =================================================================
+
+// Top 50 most liquid NSE stocks (Nifty 50 constituents)
+// These are most likely to have tick data in TrueData trial
+const NIFTY_50_SYMBOLS = [
+  "RELIANCE",
+  "TCS",
+  "HDFCBANK",
+  "INFY",
+  "ICICIBANK",
+  "HINDUNILVR",
+  "ITC",
+  "SBIN",
+  "BHARTIARTL",
+  "BAJFINANCE",
+  "KOTAKBANK",
+  "LT",
+  "AXISBANK",
+  "ASIANPAINT",
+  "MARUTI",
+  "SUNPHARMA",
+  "TITAN",
+  "ULTRACEMCO",
+  "DMART",
+  "NESTLEIND",
+  "WIPRO",
+  "HCLTECH",
+  "ADANIENT",
+  "ONGC",
+  "NTPC",
+  "POWERGRID",
+  "M&M",
+  "TATAMOTORS",
+  "JSWSTEEL",
+  "TATASTEEL",
+  "BAJAJFINSV",
+  "TECHM",
+  "COALINDIA",
+  "INDUSINDBK",
+  "ADANIPORTS",
+  "CIPLA",
+  "GRASIM",
+  "HDFCLIFE",
+  "SBILIFE",
+  "DIVISLAB",
+  "DRREDDY",
+  "EICHERMOT",
+  "APOLLOHOSP",
+  "HEROMOTOCO",
+  "BRITANNIA",
+  "SHREECEM",
+  "BAJAJ-AUTO",
+  "TATACONSUM",
+  "HINDALCO",
+  "UPL",
+];
 
 const CONFIG = {
   // Supabase connection
@@ -37,11 +69,11 @@ const CONFIG = {
   // TrueData WebSocket configuration
   TRUEDATA_USER: process.env.TRUEDATA_USER,
   TRUEDATA_PASSWORD: process.env.TRUEDATA_PASSWORD,
-  TRUEDATA_WS_PORT: process.env.TRUEDATA_WS_PORT || "8082",
-  TRUEDATA_WS_URL: "wss://push.truedata.in",
+  TRUEDATA_WS_PORT: process.env.TRUEDATA_WS_PORT || "8086",
+  TRUEDATA_WS_URL: process.env.TRUEDATA_WS_URL || "wss://push.truedata.in",
 
   // Scanner settings
-  TOP_N_STOCKS: 250,
+  TOP_N_STOCKS: 50, // TrueData trial allows 50 symbols
   CANDLE_INTERVAL_MS: 5 * 60 * 1000, // 5 minutes
   MIN_CONFIDENCE_TO_SAVE: 0.6,
   MIN_CRITERIA_MET: 4,
@@ -55,6 +87,8 @@ const CONFIG = {
   // Technical analysis
   EMA_PERIOD: 20,
   RSI_PERIOD: 14,
+  MIN_CANDLES_FOR_ANALYSIS: 15, // Minimum candles needed (instead of 20)
+  USE_ADAPTIVE_EMA: true, // Use shorter EMA if not enough data
 
   // Performance optimization
   TICK_AGGREGATION_THRESHOLD: 100, // Recalculate after 100 ticks or price change > 0.1%
@@ -75,15 +109,36 @@ class DatabaseClient {
 
   async getNifty250Symbols() {
     try {
+      // Query Nifty 50 symbols specifically (trial API supports 50 symbols)
       const { data, error } = await this.supabase
-        .from("symbols")
-        .select("symbol, name, sector") // WebSocket providers typically use symbol name or you can add instrument_token later
+        .from("nse_equity_symbols")
+        .select("symbol, instrument_token, exchange, type")
         .eq("exchange", "NSE")
-        .in("type", ["EQ", "EQUITY", "STOCK"])
-        .limit(CONFIG.TOP_N_STOCKS);
+        .eq("type", "stock")
+        .in("symbol", NIFTY_50_SYMBOLS)
+        .order("symbol", { ascending: true });
 
       if (error) throw error;
-      console.log(`✅ Loaded ${data.length} NSE symbols`);
+
+      console.log(
+        `✅ Loaded ${data.length} Nifty 50 symbols (TrueData trial supports 50)`
+      );
+      console.log(
+        `📊 [DEBUG] First 10 symbols:`,
+        data.slice(0, 10).map((s) => s.symbol)
+      );
+      console.log(
+        `📊 [DEBUG] Last 10 symbols:`,
+        data.slice(-10).map((s) => s.symbol)
+      );
+      console.log(
+        `📊 [DEBUG] Token mapping sample:`,
+        data.slice(0, 5).map((s) => `${s.instrument_token} -> ${s.symbol}`)
+      );
+
+      // Store first symbol for detailed debugging
+      this.firstSymbol = data[0]?.symbol;
+
       return data;
     } catch (error) {
       console.error("❌ Error loading symbols:", error);
@@ -91,21 +146,42 @@ class DatabaseClient {
     }
   }
 
-  async getHistoricalData(symbol, days = 1) {
+  async getHistoricalData(symbol, candlesNeeded = 25) {
     try {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - days);
-
+      // Fetch last N 5-min candles (may span multiple days)
+      // We need at least 20 candles for EMA20, fetch 25 to be safe
       const { data, error } = await this.supabase
         .from("historical_prices")
         .select("*")
         .eq("symbol", symbol)
-        .gte("date", cutoffDate.toISOString().split("T")[0])
-        .order("date", { ascending: true })
-        .order("time", { ascending: true });
+        .gte("time", "09:15") // Only market hours
+        .lte("time", "15:30") // Only market hours
+        .order("date", { ascending: false })
+        .order("time", { ascending: false })
+        .limit(candlesNeeded);
 
       if (error) throw error;
-      return data || [];
+
+      // Reverse to get chronological order (oldest to newest)
+      const sortedData = (data || []).reverse();
+
+      // Debug: Log first symbol's historical data
+      if (symbol === this.firstSymbol) {
+        console.log(`📊 [DEBUG] Historical data for ${symbol}:`, {
+          candles: sortedData.length,
+          dateRange:
+            sortedData[0]?.date +
+            " to " +
+            sortedData[sortedData.length - 1]?.date,
+          timeRange:
+            sortedData[0]?.time +
+            " to " +
+            sortedData[sortedData.length - 1]?.time,
+          sample: sortedData[0],
+        });
+      }
+
+      return sortedData;
     } catch (error) {
       console.error(`❌ Error fetching historical data for ${symbol}:`, error);
       return [];
@@ -123,6 +199,16 @@ class DatabaseClient {
         .limit(days);
 
       if (error) throw error;
+
+      // Debug: Log first symbol's daily data
+      if (symbol === this.firstSymbol) {
+        console.log(`📊 [DEBUG] Daily candles for ${symbol}:`, {
+          candles: data?.length || 0,
+          dateRange: data?.[0]?.date + " to " + data?.[data.length - 1]?.date,
+          lastClose: data?.[data.length - 1]?.close,
+        });
+      }
+
       return data || [];
     } catch (error) {
       console.error(`❌ Error fetching daily candles for ${symbol}:`, error);
@@ -176,6 +262,35 @@ class WebSocketManager {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 10;
     this.tickHandlers = new Map(); // symbol -> handler function
+    this.tokenToSymbol = new Map(); // instrument_token -> symbol
+    this.firstTickLogged = false;
+    this.noHandlerWarned = false;
+    this.rawMessageLogged = false;
+    this.parsedStructureLogged = false;
+    this.firstValidTickLogged = false;
+    this.unknownTokenWarned = false;
+    this.unknownFormatLogged = false;
+
+    // Build token-to-symbol mapping from database
+    symbols.forEach((s) => {
+      if (s.instrument_token) {
+        this.tokenToSymbol.set(s.instrument_token.toString(), s.symbol);
+      }
+    });
+
+    console.log(
+      `📊 [DEBUG] Token mapping created: ${this.tokenToSymbol.size} tokens`
+    );
+
+    // Show sample mappings
+    const sampleMappings = Array.from(this.tokenToSymbol.entries()).slice(
+      0,
+      10
+    );
+    console.log(`📊 [DEBUG] Sample token mappings:`);
+    sampleMappings.forEach(([token, symbol]) => {
+      console.log(`   ${token} -> ${symbol}`);
+    });
   }
 
   /**
@@ -253,13 +368,28 @@ class WebSocketManager {
    */
   handleMessage(data) {
     try {
+      // Debug: Log raw message to understand format
+      if (!this.rawMessageLogged) {
+        console.log(`📡 [DEBUG] Raw WebSocket message:`, data.toString());
+        this.rawMessageLogged = true;
+      }
+
       // TrueData sends JSON tick data
       const ticks = this.parseTickData(data);
+
+      // Debug: Log first tick received
+      if (!this.firstTickLogged && ticks.length > 0) {
+        console.log(`📡 [DEBUG] First tick received:`, ticks[0]);
+        this.firstTickLogged = true;
+      }
 
       ticks.forEach((tick) => {
         const handler = this.tickHandlers.get(tick.symbol);
         if (handler) {
           handler(tick);
+        } else if (!this.noHandlerWarned) {
+          console.log(`⚠️ [DEBUG] No handler for symbol: ${tick.symbol}`);
+          this.noHandlerWarned = true;
         }
       });
     } catch (error) {
@@ -272,37 +402,156 @@ class WebSocketManager {
    */
   parseTickData(data) {
     try {
-      const parsed = JSON.parse(data);
+      const rawString = data.toString();
+      const parsed = JSON.parse(rawString);
 
-      // TrueData tick format (based on common patterns):
-      // {
-      //   "symbol": "RELIANCE",
-      //   "ltp": 2450.50,
-      //   "open": 2440.00,
-      //   "high": 2455.00,
-      //   "low": 2435.00,
-      //   "close": 2450.50,
-      //   "volume": 1234567,
-      //   "timestamp": "2025-11-10 10:15:30"
-      // }
-      // OR could be an array of ticks
+      // Debug: Log parsed structure for first message
+      if (!this.parsedStructureLogged) {
+        console.log(
+          `📊 [DEBUG] Parsed tick structure:`,
+          JSON.stringify(parsed, null, 2)
+        );
+        this.parsedStructureLogged = true;
+      }
 
-      // Handle both single tick and array of ticks
-      const tickArray = Array.isArray(parsed) ? parsed : [parsed];
+      // TrueData WebSocket format patterns:
 
-      return tickArray.map((tick) => ({
-        symbol: tick.symbol || tick.Symbol,
-        ltp: parseFloat(tick.ltp || tick.LTP || tick.close),
-        volume: parseInt(tick.volume || tick.Volume || 0),
-        timestamp: tick.timestamp || tick.Timestamp || new Date().toISOString(),
-        open: parseFloat(tick.open || tick.Open || tick.ltp),
-        high: parseFloat(tick.high || tick.High || tick.ltp),
-        low: parseFloat(tick.low || tick.Low || tick.ltp),
-      }));
+      // Pattern 1: Trade data with instrument token
+      // { trade: [token, timestamp, ltp, volume, avgPrice, totalVolume, low, high, ...] }
+      if (parsed.trade && Array.isArray(parsed.trade)) {
+        return this.parseTradeArray(parsed.trade);
+      }
+
+      // Pattern 2: Bid/Ask data (skip for now)
+      if (parsed.bidask) {
+        return [];
+      }
+
+      // Pattern 3: Heartbeat (skip)
+      if (parsed.success && parsed.message === "HeartBeat") {
+        return [];
+      }
+
+      // Pattern 4: Array of trade data
+      if (Array.isArray(parsed)) {
+        return parsed.flatMap((item) => {
+          if (item.trade && Array.isArray(item.trade)) {
+            return this.parseTradeArray(item.trade);
+          }
+          return [];
+        });
+      }
+
+      // Pattern 5: Legacy format with symbol field
+      if (parsed.symbol || parsed.Symbol || parsed.sym) {
+        return [this.normalizeTick(parsed)];
+      }
+
+      // Pattern 6: Nested data property
+      if (parsed.data && Array.isArray(parsed.data)) {
+        return parsed.data.flatMap((item) => {
+          if (item.trade && Array.isArray(item.trade)) {
+            return this.parseTradeArray(item.trade);
+          }
+          return [this.normalizeTick(item)];
+        });
+      }
+
+      if (!this.unknownFormatLogged) {
+        console.log(`⚠️ [DEBUG] Unknown tick format:`, parsed);
+        this.unknownFormatLogged = true;
+      }
+      return [];
     } catch (error) {
       console.error("Error parsing TrueData tick:", error);
       return [];
     }
+  }
+
+  /**
+   * Parse TrueData trade array format
+   * Format: [token, timestamp, ltp, volume, avgPrice, totalVolume, low, high, lowerCircuit, upperCircuit, ...]
+   */
+  parseTradeArray(trade) {
+    try {
+      if (!Array.isArray(trade) || trade.length < 8) {
+        return [];
+      }
+
+      const token = trade[0].toString();
+      const symbol = this.tokenToSymbol.get(token);
+
+      if (!symbol) {
+        if (!this.unknownTokenWarned) {
+          console.log(
+            `⚠️ [UNMAPPED TOKEN] ${token} - LTP: ₹${trade[2]}, Vol: ${trade[3]}, High: ₹${trade[7]}, Low: ₹${trade[6]}`
+          );
+          console.log(
+            `   💡 This token is not in the nse_equity_symbols table or not in monitored symbols`
+          );
+          this.unknownTokenWarned = true;
+        }
+        return [];
+      }
+
+      const tick = {
+        symbol: symbol,
+        ltp: parseFloat(trade[2]) || 0,
+        volume: parseInt(trade[3]) || 0,
+        timestamp: trade[1] || new Date().toISOString(),
+        open: parseFloat(trade[2]) || 0, // Use LTP as open if not available
+        high: parseFloat(trade[7]) || parseFloat(trade[2]) || 0,
+        low: parseFloat(trade[6]) || parseFloat(trade[2]) || 0,
+      };
+
+      // Debug: Log first valid tick
+      if (!this.firstValidTickLogged) {
+        console.log(`✅ [DEBUG] First parsed tick:`, tick);
+        this.firstValidTickLogged = true;
+      }
+
+      return [tick];
+    } catch (error) {
+      console.error("Error parsing trade array:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Normalize tick data to standard format
+   */
+  normalizeTick(tick) {
+    // Try multiple field name variations
+    const symbol =
+      tick.symbol || tick.Symbol || tick.sym || tick.SYM || tick.tradingSymbol;
+    const ltp = parseFloat(
+      tick.ltp ||
+        tick.LTP ||
+        tick.lastPrice ||
+        tick.last_price ||
+        tick.close ||
+        tick.Close ||
+        0
+    );
+    const volume = parseInt(
+      tick.volume || tick.Volume || tick.vol || tick.VOL || 0
+    );
+    const timestamp =
+      tick.timestamp ||
+      tick.Timestamp ||
+      tick.time ||
+      tick.Time ||
+      new Date().toISOString();
+
+    return {
+      symbol: symbol,
+      ltp: ltp,
+      volume: volume,
+      timestamp: timestamp,
+      open: parseFloat(tick.open || tick.Open || tick.o || ltp),
+      high: parseFloat(tick.high || tick.High || tick.h || ltp),
+      low: parseFloat(tick.low || tick.Low || tick.l || ltp),
+    };
   }
 
   /**
@@ -352,6 +601,7 @@ class CandleAggregator {
     this.currentCandle = null;
     this.candleStartTime = null;
     this.ticks = [];
+    this.firstCandleLogged = false;
   }
 
   /**
@@ -367,6 +617,15 @@ class CandleAggregator {
       this.candleStartTime.getTime() !== candleTime.getTime()
     ) {
       const completedCandle = this.currentCandle;
+
+      // Debug: Log first candle creation
+      if (!this.firstCandleLogged) {
+        console.log(`🕯️ [DEBUG] First candle created for ${this.symbol}:`, {
+          time: candleTime.toTimeString().slice(0, 5),
+          price: tick.ltp,
+        });
+        this.firstCandleLogged = true;
+      }
 
       // Reset for new candle
       this.candleStartTime = candleTime;
@@ -418,14 +677,32 @@ class CandleAggregator {
 // =================================================================
 
 class TechnicalAnalyzer {
+  constructor() {
+    this.analysisLogCount = {};
+    this.insufficientDataWarned = false;
+  }
+
   calculateEMA(prices, period = 20) {
-    if (prices.length < period) return null;
+    if (prices.length === 0) return null;
 
-    const multiplier = 2 / (period + 1);
+    // Adaptive EMA: Use available data if less than required period
+    const actualPeriod = CONFIG.USE_ADAPTIVE_EMA
+      ? Math.min(period, prices.length)
+      : period;
+
+    if (prices.length < actualPeriod) {
+      console.log(
+        `⚠️ [DEBUG] Not enough prices for EMA${period}: ${prices.length} candles (using EMA${actualPeriod})`
+      );
+      return null;
+    }
+
+    const multiplier = 2 / (actualPeriod + 1);
     let ema =
-      prices.slice(0, period).reduce((sum, price) => sum + price, 0) / period;
+      prices.slice(0, actualPeriod).reduce((sum, price) => sum + price, 0) /
+      actualPeriod;
 
-    for (let i = period; i < prices.length; i++) {
+    for (let i = actualPeriod; i < prices.length; i++) {
       ema = prices[i] * multiplier + ema * (1 - multiplier);
     }
 
@@ -433,21 +710,28 @@ class TechnicalAnalyzer {
   }
 
   calculateRSI(prices, period = 14) {
-    if (prices.length < period + 1) return null;
+    if (prices.length < 2) return null;
+
+    // Adaptive RSI: Use available data if less than required period
+    const actualPeriod = CONFIG.USE_ADAPTIVE_EMA
+      ? Math.min(period, Math.max(5, prices.length - 1))
+      : period;
+
+    if (prices.length < actualPeriod + 1) return null;
 
     const changes = [];
     for (let i = 1; i < prices.length; i++) {
       changes.push(prices[i] - prices[i - 1]);
     }
 
-    const recentChanges = changes.slice(-period);
+    const recentChanges = changes.slice(-actualPeriod);
     const gains = recentChanges.map((change) => (change > 0 ? change : 0));
     const losses = recentChanges.map((change) =>
       change < 0 ? Math.abs(change) : 0
     );
 
-    const avgGain = gains.reduce((sum, gain) => sum + gain, 0) / period;
-    const avgLoss = losses.reduce((sum, loss) => sum + loss, 0) / period;
+    const avgGain = gains.reduce((sum, gain) => sum + gain, 0) / actualPeriod;
+    const avgLoss = losses.reduce((sum, loss) => sum + loss, 0) / actualPeriod;
 
     if (avgLoss === 0) return 100;
 
@@ -461,11 +745,19 @@ class TechnicalAnalyzer {
    * Analyze stock with real-time + historical data
    */
   analyzeStock(symbol, historicalCandles, currentCandle, dailyCandles) {
+    // Relaxed requirement: Only need current candle and some historical data
     if (
       !currentCandle ||
-      !dailyCandles ||
-      dailyCandles.length < CONFIG.EMA_PERIOD
+      historicalCandles.length < CONFIG.MIN_CANDLES_FOR_ANALYSIS
     ) {
+      if (!this.insufficientDataWarned) {
+        console.log(`⚠️ [DEBUG] ${symbol} - Insufficient data:`, {
+          hasCurrentCandle: !!currentCandle,
+          historicalCandles: historicalCandles?.length || 0,
+          minRequired: CONFIG.MIN_CANDLES_FOR_ANALYSIS,
+        });
+        this.insufficientDataWarned = true;
+      }
       return null;
     }
 
@@ -477,10 +769,21 @@ class TechnicalAnalyzer {
     // 1. NIFTY 250 member (assumed true)
     const nifty250Member = true;
 
-    // 2. Trading above Daily 20 EMA
-    const dailyPrices = dailyCandles.map((c) => parseFloat(c.close));
-    const dailyEMA20 = this.calculateEMA(dailyPrices, CONFIG.EMA_PERIOD);
-    const aboveDailyEMA20 = dailyEMA20 ? currentPrice > dailyEMA20 : false;
+    // 2. Trading above Daily 20 EMA (OPTIONAL - skip if no daily data)
+    let dailyEMA20 = null;
+    let aboveDailyEMA20 = true; // Assume true if no daily data
+
+    if (dailyCandles && dailyCandles.length >= CONFIG.EMA_PERIOD) {
+      const dailyPrices = dailyCandles.map((c) => parseFloat(c.close));
+      dailyEMA20 = this.calculateEMA(dailyPrices, CONFIG.EMA_PERIOD);
+      aboveDailyEMA20 = dailyEMA20 ? currentPrice > dailyEMA20 : true;
+    } else {
+      console.log(
+        `ℹ️ [DEBUG] ${symbol} - Skipping daily EMA (insufficient daily data: ${
+          dailyCandles?.length || 0
+        } candles)`
+      );
+    }
 
     // 3. Trading above 5-minute 20 EMA (includes current candle!)
     const fiveMinPrices = allCandles.map((c) => parseFloat(c.close));
@@ -496,6 +799,33 @@ class TechnicalAnalyzer {
     // 6. RSI between 50 and 80
     const rsi = this.calculateRSI(fiveMinPrices, CONFIG.RSI_PERIOD);
     const rsiInRange = rsi ? rsi > 50 && rsi < 80 : false;
+
+    // Debug: Log analysis for first symbol periodically
+    if (!this.analysisLogCount) this.analysisLogCount = {};
+    if (!this.analysisLogCount[symbol]) this.analysisLogCount[symbol] = 0;
+    this.analysisLogCount[symbol]++;
+
+    // Log every 100th analysis or when criteria >= 4
+    const shouldLog = this.analysisLogCount[symbol] % 100 === 1;
+
+    if (shouldLog) {
+      console.log(`📊 [DEBUG] Analysis for ${symbol}:`, {
+        currentPrice: currentPrice.toFixed(2),
+        historicalCandles: historicalCandles.length,
+        allCandles: allCandles.length,
+        dailyEMA20: dailyEMA20?.toFixed(2),
+        fiveMinEMA20: fiveMinEMA20?.toFixed(2),
+        rsi: rsi?.toFixed(2),
+        criteria: {
+          "1_nifty250": nifty250Member,
+          "2_aboveDailyEMA": aboveDailyEMA20,
+          "3_above5minEMA": above5minEMA20,
+          "4_volume": volumeCondition,
+          "5_priceUp": openPriceCondition,
+          "6_rsiRange": rsiInRange,
+        },
+      });
+    }
 
     // Calculate criteria met
     const criteriaResults = [
@@ -522,6 +852,16 @@ class TechnicalAnalyzer {
     } else {
       signalType = "NEUTRAL";
       predictedDirection = "SIDEWAYS";
+    }
+
+    // Debug: Log when criteria >= 4
+    if (criteriaMet >= 4) {
+      console.log(`🎯 [DEBUG] High criteria for ${symbol}:`, {
+        criteriaMet,
+        probability: (probability * 100).toFixed(0) + "%",
+        signalType,
+        currentPrice: currentPrice.toFixed(2),
+      });
     }
 
     const targetPrice =
@@ -626,6 +966,7 @@ class EnhancedBreakoutScanner {
     this.dailyCandles = new Map(); // symbol -> daily candles
     this.lastSignalTime = new Map(); // symbol -> timestamp (prevent duplicate signals)
     this.tickCount = new Map(); // symbol -> tick count
+    this.tickCountLogged = false;
   }
 
   async initialize() {
@@ -669,7 +1010,7 @@ class EnhancedBreakoutScanner {
       const symbol = symbolData.symbol;
 
       const [historical, daily] = await Promise.all([
-        this.db.getHistoricalData(symbol, 1),
+        this.db.getHistoricalData(symbol, CONFIG.EMA_PERIOD + 5), // Fetch 25 candles for EMA20
         this.db.getDailyCandles(symbol, 30),
       ]);
 
@@ -713,6 +1054,12 @@ class EnhancedBreakoutScanner {
     const count = (this.tickCount.get(symbol) || 0) + 1;
     this.tickCount.set(symbol, count);
 
+    // Debug: Log tick count for first symbol
+    if (!this.tickCountLogged && count === 1) {
+      console.log(`📈 [DEBUG] First tick for ${symbol}, count: ${count}`);
+      this.tickCountLogged = true;
+    }
+
     // Recalculate only if:
     // 1. Significant price change (> 0.1%)
     // 2. Every 100 ticks
@@ -721,6 +1068,9 @@ class EnhancedBreakoutScanner {
       this.hasSignificantPriceChange(symbol, tick.ltp);
 
     if (shouldRecalculate) {
+      if (count % CONFIG.TICK_AGGREGATION_THRESHOLD === 0) {
+        console.log(`🔄 [DEBUG] Analyzing ${symbol} at tick ${count}`);
+      }
       this.analyzeSymbol(symbol);
     }
   }
@@ -741,10 +1091,20 @@ class EnhancedBreakoutScanner {
     const daily = this.dailyCandles.get(symbol);
     const aggregator = this.candleAggregators.get(symbol);
 
-    if (!historical || !daily || !aggregator) return;
+    if (!historical || !daily || !aggregator) {
+      console.log(`⚠️ [DEBUG] Missing data for ${symbol}:`, {
+        hasHistorical: !!historical,
+        hasDaily: !!daily,
+        hasAggregator: !!aggregator,
+      });
+      return;
+    }
 
     const currentCandle = aggregator.getCurrentCandle();
-    if (!currentCandle) return;
+    if (!currentCandle) {
+      console.log(`⚠️ [DEBUG] No current candle for ${symbol}`);
+      return;
+    }
 
     // Analyze with real-time data
     const signal = this.analyzer.analyzeStock(
@@ -765,13 +1125,24 @@ class EnhancedBreakoutScanner {
       const now = Date.now();
 
       if (!lastSignal || now - lastSignal > 5 * 60 * 1000) {
-        await this.db.saveBreakoutSignal(signal);
-        this.lastSignalTime.set(symbol, now);
+        console.log(`💾 [DEBUG] Saving signal for ${symbol}...`);
+        const saved = await this.db.saveBreakoutSignal(signal);
 
+        if (saved) {
+          this.lastSignalTime.set(symbol, now);
+          console.log(
+            `🎯 SIGNAL SAVED: ${symbol} - ${signal.signal_type} (${(
+              signal.probability * 100
+            ).toFixed(0)}% confidence) @ ₹${signal.current_price}`
+          );
+        } else {
+          console.log(`❌ [DEBUG] Failed to save signal for ${symbol}`);
+        }
+      } else {
         console.log(
-          `🎯 SIGNAL: ${symbol} - ${signal.signal_type} (${(
-            signal.probability * 100
-          ).toFixed(0)}% confidence) @ ₹${signal.current_price}`
+          `⏭️ [DEBUG] Skipping duplicate signal for ${symbol} (last signal was ${Math.round(
+            (now - lastSignal) / 1000
+          )}s ago)`
         );
       }
     }
@@ -802,6 +1173,9 @@ class EnhancedBreakoutScanner {
 
   async start() {
     console.log("🚀 Starting enhanced scanner...");
+    console.log(
+      `📊 Monitoring ${this.symbols.length} Nifty 50 symbols for tick data...`
+    );
 
     // Monitor market hours
     setInterval(() => {
@@ -813,6 +1187,39 @@ class EnhancedBreakoutScanner {
         this.wsManager.connect();
       }
     }, 60000); // Check every minute
+
+    // Monitor tick data reception every 5 minutes
+    setInterval(() => {
+      const symbolsWithTicks = [];
+      const symbolsWithoutTicks = [];
+
+      this.symbols.forEach((symbolData) => {
+        const count = this.tickCount.get(symbolData.symbol) || 0;
+        if (count > 0) {
+          symbolsWithTicks.push(`${symbolData.symbol}(${count})`);
+        } else {
+          symbolsWithoutTicks.push(symbolData.symbol);
+        }
+      });
+
+      console.log(
+        `\n📊 TICK DATA STATUS (${new Date().toLocaleTimeString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        })}):`
+      );
+      console.log(`   ✅ Receiving ticks: ${symbolsWithTicks.length} symbols`);
+      console.log(`   ❌ No ticks yet: ${symbolsWithoutTicks.length} symbols`);
+
+      if (symbolsWithTicks.length > 0) {
+        console.log(
+          `   Top 10 active: ${symbolsWithTicks.slice(0, 10).join(", ")}`
+        );
+      }
+
+      if (symbolsWithoutTicks.length > 0 && symbolsWithoutTicks.length <= 10) {
+        console.log(`   Missing ticks: ${symbolsWithoutTicks.join(", ")}`);
+      }
+    }, 5 * 60 * 1000); // Every 5 minutes
   }
 
   async shutdown() {
