@@ -88,7 +88,7 @@ export default function StockStrategyPage() {
   useEffect(() => {
     loadBreakoutSignals();
 
-    const subscription = supabase
+    const channel = supabase
       .channel("strategy_signals_realtime")
       .on(
         "postgres_changes",
@@ -96,10 +96,16 @@ export default function StockStrategyPage() {
           event: "INSERT",
           schema: "public",
           table: "breakout_signals",
-          filter: "probability.gte.0.6",
         },
         (payload) => {
           const newSignal = payload.new as BreakoutSignal;
+
+          console.log("New signal received:", newSignal);
+
+          // Only add if probability is >= 0.6
+          if (newSignal.probability < 0.6) {
+            return;
+          }
 
           // Filter based on current strategy
           let shouldAdd = true;
@@ -121,16 +127,24 @@ export default function StockStrategyPage() {
           }
 
           if (shouldAdd) {
-            setSignals((prev) => [newSignal, ...prev].slice(0, 50));
+            setSignals((prev) => {
+              // Check if signal already exists to avoid duplicates
+              const exists = prev.some((s) => s.id === newSignal.id);
+              if (exists) return prev;
+
+              return [newSignal, ...prev].slice(0, 50);
+            });
           }
         }
       )
       .subscribe((status) => {
+        console.log("Realtime subscription status:", status);
         setIsConnected(status === "SUBSCRIBED");
       });
 
     return () => {
-      subscription.unsubscribe();
+      console.log("Unsubscribing from realtime channel");
+      channel.unsubscribe();
     };
   }, [supabase, loadBreakoutSignals, selectedStrategy]);
 
@@ -187,7 +201,7 @@ export default function StockStrategyPage() {
   };
 
   return (
-    <Card className="min-h-screen bg-background text-foreground mt-6 md:mt-6 p-4 md:p-8 rounded shadow-none">
+    <Card className="min-h-screen bg-background text-foreground mt-4 md:mt-6 p-3 md:p-8 rounded shadow-none">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <Button
           className="cursor-pointer"
@@ -196,27 +210,33 @@ export default function StockStrategyPage() {
         >
           &larr; Back
         </Button>
-        <div className="flex gap-2 md:gap-4">
-          <Button variant="default">Download</Button>
-          <Button variant="default">Get Today&apos;s picks</Button>
+        <div className="flex gap-2 md:gap-4 flex-wrap">
+          <Button variant="default" size="sm" className="text-xs md:text-sm">
+            Download
+          </Button>
+          <Button variant="default" size="sm" className="text-xs md:text-sm">
+            Get Today&apos;s picks
+          </Button>
         </div>
       </div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 gap-4">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold flex items-center gap-3">
           <span className="inline-block bg-blue-500 rounded-full p-2">
-            <Zap className="w-5 h-5 text-white" />
+            <Zap className="w-4 h-4 md:w-5 md:h-5 text-white" />
           </span>
-          {selectedStrategy || "Breakout Strategy"}
+          <span className="break-words">
+            {selectedStrategy || "Breakout Strategy"}
+          </span>
         </h1>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <div
               className={`w-3 h-3 rounded-full ${
                 isConnected ? "bg-green-500" : "bg-red-500"
               }`}
             />
-            <span className="text-sm text-gray-600">
+            <span className="text-xs md:text-sm text-muted-foreground">
               {isConnected ? "Live Updates" : "Disconnected"}
             </span>
           </div>
@@ -230,31 +250,31 @@ export default function StockStrategyPage() {
             <RefreshCw
               className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
             />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
 
-      <div className="text-base md:text-md mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <p className="text-gray-700 mb-3">
+      <div className="text-sm md:text-base mb-6 p-3 md:p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+        <p className="text-foreground mb-3">
           {getStrategyDescription(selectedStrategy)}
         </p>
-        <div className="flex flex-wrap gap-4 text-sm">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 md:gap-4 text-xs md:text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>
+            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+            <span className="text-foreground">
               <b>6-Criteria Analysis:</b> NIFTY 500, EMA, Volume, RSI screening
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span>
+            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+            <span className="text-foreground">
               <b>Real-time Updates:</b> Every 30 seconds during market hours
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-            <span>
+            <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
+            <span className="text-foreground">
               <b>Smart Alerts:</b> High-confidence signals with stop-loss
             </span>
           </div>
@@ -262,36 +282,42 @@ export default function StockStrategyPage() {
       </div>
 
       {/* Strategy Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Card className="text-center p-4">
-          <div className="text-xs text-gray-400 mb-1">Total Signals (4h)</div>
-          <div className="text-2xl font-bold text-blue-600">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+        <Card className="text-center p-3 md:p-4">
+          <div className="text-xs text-muted-foreground mb-1">
+            Total Signals (4h)
+          </div>
+          <div className="text-xl md:text-2xl font-bold text-blue-600">
             {strategyStats.totalSignals}
           </div>
         </Card>
-        <Card className="text-center p-4">
-          <div className="text-xs text-gray-400 mb-1">High Confidence</div>
-          <div className="text-2xl font-bold text-green-600">
+        <Card className="text-center p-3 md:p-4">
+          <div className="text-xs text-muted-foreground mb-1">
+            High Confidence
+          </div>
+          <div className="text-xl md:text-2xl font-bold text-green-600">
             {strategyStats.highConfidenceSignals}
           </div>
         </Card>
-        <Card className="text-center p-4">
-          <div className="text-xs text-gray-400 mb-1">Avg Confidence</div>
-          <div className="text-2xl font-bold text-gray-700">
+        <Card className="text-center p-3 md:p-4">
+          <div className="text-xs text-muted-foreground mb-1">
+            Avg Confidence
+          </div>
+          <div className="text-xl md:text-2xl font-bold text-foreground">
             {strategyStats.avgConfidence}%
           </div>
         </Card>
-        <Card className="text-center p-4">
-          <div className="text-xs text-gray-400 mb-1">Recent (1h)</div>
-          <div className="text-2xl font-bold text-orange-600">
+        <Card className="text-center p-3 md:p-4">
+          <div className="text-xs text-muted-foreground mb-1">Recent (1h)</div>
+          <div className="text-xl md:text-2xl font-bold text-orange-600">
             {strategyStats.recentSignals}
           </div>
         </Card>
       </div>
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <Target className="w-6 h-6 text-blue-600" />
-        Live Breakout Signals
-        <Badge variant="outline" className="ml-2">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2 flex-wrap">
+        <Target className="w-5 h-5 md:w-6 md:h-6 text-blue-600 flex-shrink-0" />
+        <span>Live Breakout Signals</span>
+        <Badge variant="outline" className="ml-0 md:ml-2">
           {signals.length} active
         </Badge>
       </h2>
@@ -300,21 +326,21 @@ export default function StockStrategyPage() {
       <div className="mb-8">
         {isLoading ? (
           <div className="text-center py-12">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600">Loading breakout signals...</p>
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">Loading breakout signals...</p>
           </div>
         ) : signals.length === 0 ? (
           <div className="text-center py-12">
-            <AlertTriangle className="w-8 h-8 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600">
+            <AlertTriangle className="w-8 h-8 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">
               No breakout signals found for this strategy
             </p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Signals are generated every 30 seconds during market hours
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
             {signals.slice(0, 12).map((signal, index) => (
               <BreakoutSignalCard key={signal.id || index} signal={signal} />
             ))}
@@ -325,7 +351,7 @@ export default function StockStrategyPage() {
       {signals.length > 0 && (
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
               <Activity className="w-5 h-5 text-blue-600" />
               Latest Signal Activity
             </CardTitle>
@@ -335,22 +361,24 @@ export default function StockStrategyPage() {
               {signals.slice(0, 8).map((signal, index) => (
                 <div
                   key={signal.id || index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg gap-2"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     {getSignalIcon(signal.signal_type)}
-                    <div>
-                      <span className="font-semibold">{signal.symbol}</span>
-                      <div className="text-sm text-gray-500">
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold block truncate">
+                        {signal.symbol}
+                      </span>
+                      <div className="text-xs md:text-sm text-muted-foreground">
                         {new Date(signal.created_at).toLocaleTimeString()}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold">
+                  <div className="text-right flex-shrink-0">
+                    <div className="font-semibold text-sm md:text-base">
                       ₹{signal.current_price?.toFixed(2)}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs md:text-sm text-muted-foreground whitespace-nowrap">
                       {(signal.probability * 100).toFixed(1)}% confidence
                     </div>
                   </div>
