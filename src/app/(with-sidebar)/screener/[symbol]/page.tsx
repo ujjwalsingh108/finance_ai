@@ -23,7 +23,6 @@ export default function StockStrategyPage() {
   const params = useParams();
   const [signals, setSignals] = useState<BreakoutSignal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState<string>("");
 
   const supabase = createClient();
@@ -84,69 +83,18 @@ export default function StockStrategyPage() {
     }
   }, [supabase, selectedStrategy]);
 
-  // Set up real-time subscription for new signals
+  // Auto-refresh signals every 15 seconds
   useEffect(() => {
     loadBreakoutSignals();
 
-    const channel = supabase
-      .channel("strategy_signals_realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "breakout_signals",
-        },
-        (payload) => {
-          const newSignal = payload.new as BreakoutSignal;
-
-          console.log("New signal received:", newSignal);
-
-          // Only add if probability is >= 0.6
-          if (newSignal.probability < 0.6) {
-            return;
-          }
-
-          // Filter based on current strategy
-          let shouldAdd = true;
-          if (
-            selectedStrategy.toLowerCase().includes("bullish") &&
-            newSignal.signal_type !== "BULLISH_BREAKOUT"
-          ) {
-            shouldAdd = false;
-          } else if (
-            selectedStrategy.toLowerCase().includes("bearish") &&
-            newSignal.signal_type !== "BEARISH_BREAKDOWN"
-          ) {
-            shouldAdd = false;
-          } else if (
-            selectedStrategy.toLowerCase().includes("breakout") &&
-            newSignal.signal_type === "NEUTRAL"
-          ) {
-            shouldAdd = false;
-          }
-
-          if (shouldAdd) {
-            setSignals((prev) => {
-              // Check if signal already exists to avoid duplicates
-              const exists = prev.some((s) => s.id === newSignal.id);
-              if (exists) return prev;
-
-              return [newSignal, ...prev].slice(0, 50);
-            });
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log("Realtime subscription status:", status);
-        setIsConnected(status === "SUBSCRIBED");
-      });
+    const intervalId = setInterval(() => {
+      loadBreakoutSignals();
+    }, 15000); // 15 seconds
 
     return () => {
-      console.log("Unsubscribing from realtime channel");
-      channel.unsubscribe();
+      clearInterval(intervalId);
     };
-  }, [supabase, loadBreakoutSignals, selectedStrategy]);
+  }, [loadBreakoutSignals]);
 
   // Helper functions
   const getSignalIcon = (signalType: string) => {
@@ -231,13 +179,9 @@ export default function StockStrategyPage() {
 
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                isConnected ? "bg-green-500" : "bg-red-500"
-              }`}
-            />
+            <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
             <span className="text-xs md:text-sm text-muted-foreground">
-              {isConnected ? "Live Updates" : "Disconnected"}
+              Auto-refresh (15s)
             </span>
           </div>
 
@@ -269,7 +213,7 @@ export default function StockStrategyPage() {
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
             <span className="text-foreground">
-              <b>Real-time Updates:</b> Every 30 seconds during market hours
+              <b>Auto-refresh:</b> Every 15 seconds
             </span>
           </div>
           <div className="flex items-center gap-2">
