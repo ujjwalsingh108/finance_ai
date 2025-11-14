@@ -190,11 +190,18 @@ class DatabaseClient {
 
   async getDailyCandles(symbol, days = 30) {
     try {
+      // Fetch last candle of each day (15:30) for previous days
+      // This gives us proper daily OHLCV data
+      const daysToFetch = days + 10; // Extra buffer for weekends/holidays
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysToFetch);
+
       const { data, error } = await this.supabase
         .from("historical_prices")
-        .select("date, open, high, low, close, volume")
+        .select("date, time, open, high, low, close, volume")
         .eq("symbol", symbol)
-        .eq("time", "15:30")
+        .eq("time", "15:30") // Market closing time - represents daily candle
+        .gte("date", startDate.toISOString().split("T")[0])
         .order("date", { ascending: true })
         .limit(days);
 
@@ -870,7 +877,8 @@ class TechnicalAnalyzer {
     const stopLoss =
       predictedDirection === "UP" ? currentPrice * 0.99 : currentPrice * 1.01;
 
-    const volumeRatio = this.calculateVolumeRatio(allCandles);
+    // Calculate volume ratio from daily candles (not 5-min candles)
+    const volumeRatio = this.calculateVolumeRatio(dailyCandles);
 
     return {
       symbol,
@@ -923,19 +931,16 @@ class TechnicalAnalyzer {
     }
   }
 
-  calculateVolumeRatio(candles) {
+  /**
+   * Calculate volume ratio: Current day volume / Average of previous days
+   * Now works with pre-aggregated daily candles
+   */
+  calculateVolumeRatio(dailyCandles) {
     try {
-      const dailyVolumes = {};
+      if (!dailyCandles || dailyCandles.length < 2) return null;
 
-      candles.forEach((candle) => {
-        const date = candle.date;
-        if (!dailyVolumes[date]) {
-          dailyVolumes[date] = 0;
-        }
-        dailyVolumes[date] += parseInt(candle.volume || 0);
-      });
-
-      const volumes = Object.values(dailyVolumes);
+      // Daily candles already have aggregated volume per day
+      const volumes = dailyCandles.map((c) => parseInt(c.volume || 0));
 
       if (volumes.length < 2) return null;
 

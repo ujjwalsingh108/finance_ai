@@ -35,6 +35,8 @@ yarn-error.log*
 
 # deployment script droplet server
 deploy.sh
+setup-cron.sh
+fetch-historical-cron.sh
 package.scanner.json
 TRUEDATA-SETUP.md
 WEBSOCKET-SETUP.md

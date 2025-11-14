@@ -178,7 +178,7 @@ pm2 delete breakout-scanner 2>/dev/null || true
 pm2 delete truedata-scanner 2>/dev/null || true
 
 # Start with PM2
-pm2 start breakout-scanner.js --name "truedata-scanner"
+pm2 start breakout-scanner.js --name "breakout-scanner"
 
 # Configure auto-start on reboot
 pm2 startup systemd -u root --hp /root
@@ -206,10 +206,10 @@ echo "║                                                            ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 echo "📊 Useful Commands:"
-echo "   • View logs:      pm2 logs truedata-scanner"
+echo "   • View logs:      pm2 logs breakout-scanner"
 echo "   • Monitor:        pm2 monit"
-echo "   • Restart:        pm2 restart truedata-scanner"
-echo "   • Stop:           pm2 stop truedata-scanner"
+echo "   • Restart:        pm2 restart breakout-scanner"
+echo "   • Stop:           pm2 stop breakout-scanner"
 echo "   • Check status:   pm2 status"
 echo ""
 echo "📍 Project Location: $PROJECT_DIR"
@@ -232,7 +232,7 @@ echo "     - WebSocket disconnected (saves resources)"
 echo "     - Auto-reconnects when market opens"
 echo ""
 echo "🎯 Next Steps:"
-echo "   1. Check logs:    pm2 logs truedata-scanner --lines 50"
+echo "   1. Check logs:    pm2 logs breakout-scanner --lines 50"
 echo "   2. Wait for market hours to see WebSocket connection"
 echo "   3. Verify signals in Supabase breakout_signals table"
 echo "   4. Monitor resource usage: pm2 monit"
