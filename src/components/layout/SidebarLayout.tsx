@@ -18,16 +18,20 @@ export default function SidebarLayout({
   const sidebarWidth = isMobile ? 0 : isCollapsed ? 64 : 240;
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
       {/* Main content area */}
       <div
-        className="flex-1 transition-all duration-300"
+        className="flex-1 transition-all duration-300 w-full"
         style={{ marginLeft: isMobile ? 0 : sidebarWidth }}
       >
-        <Header sidebarWidth={sidebarWidth} />
-        <main className="pt-16 min-h-screen p-6">{children}</main>
+        <Header
+          sidebarWidth={sidebarWidth}
+          isMobile={isMobile}
+          onMenuClick={() => setIsCollapsed(false)}
+        />
+        <main className="pt-16 min-h-screen p-3 md:p-6">{children}</main>
       </div>
 
       {/* Mobile Backdrop */}
@@ -36,17 +40,6 @@ export default function SidebarLayout({
           className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setIsCollapsed(true)}
         />
-      )}
-
-      {/* Mobile Hamburger Menu */}
-      {isMobile && (
-        <button
-          onClick={() => setIsCollapsed(false)}
-          className="fixed top-4 left-4 z-40 p-2 rounded-md bg-muted/80 hover:bg-muted transition-colors"
-          aria-label="Open sidebar"
-        >
-          <Menu size={20} />
-        </button>
       )}
     </div>
   );
