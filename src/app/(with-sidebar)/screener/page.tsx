@@ -155,9 +155,9 @@ export default function Screener() {
   };
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">
+    <div className="p-3 md:p-4 space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
           Discover Your Next Winning Trades
         </h1>
         <input
@@ -167,16 +167,16 @@ export default function Screener() {
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
-        <div className="flex flex-col">
+        <div className="flex flex-col items-start sm:items-end">
           <Button
             variant="default"
-            className="mb-2 cursor-pointer"
+            className="mb-2 cursor-pointer text-sm md:text-base w-full sm:w-auto"
             onClick={handleButtonClick}
             disabled={uploading}
           >
             {uploading ? "Uploading..." : "Import Stocks"}
           </Button>
-          <span className="ml-2 text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             {fileName ? fileName : "No file chosen"}
           </span>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Menu } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import WatchlistCard, {
@@ -9,9 +9,15 @@ import WatchlistCard, {
 
 interface HeaderProps {
   sidebarWidth?: number;
+  isMobile?: boolean;
+  onMenuClick?: () => void;
 }
 
-export default function Header({ sidebarWidth = 240 }: HeaderProps) {
+export default function Header({
+  sidebarWidth = 240,
+  isMobile = false,
+  onMenuClick,
+}: HeaderProps) {
   const [showWatchlist, setShowWatchlist] = useState(false);
 
   // Example watchlist data
@@ -85,15 +91,29 @@ export default function Header({ sidebarWidth = 240 }: HeaderProps) {
 
   return (
     <header
-      className={`h-16 flex items-center justify-between px-6 shadow-md fixed top-0 z-50 w-full max-w-full overflow-hidden transition-all duration-300 ${
+      className={`h-16 flex items-center justify-between px-3 md:px-6 shadow-md fixed top-0 z-40 w-full max-w-full overflow-hidden transition-all duration-300 ${
         darkMode ? "bg-black" : "bg-white"
       }`}
-      style={{ left: sidebarWidth, width: `calc(100vw - ${sidebarWidth}px)` }}
+      style={{
+        left: isMobile ? 0 : sidebarWidth,
+        width: isMobile ? "100vw" : `calc(100vw - ${sidebarWidth}px)`,
+      }}
     >
-      <div className="flex items-center gap-2 min-w-0"></div>
-      <div className="flex items-center gap-4 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
+        {/* Mobile Hamburger Menu */}
+        {isMobile && onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="p-2 rounded-md hover:bg-muted/80 transition-colors"
+            aria-label="Open sidebar"
+          >
+            <Menu size={20} />
+          </button>
+        )}
+      </div>
+      <div className="flex items-center gap-2 md:gap-4 min-w-0">
         <button
-          className={`px-4 py-2 cursor-pointer rounded-full font-semibold transition whitespace-nowrap ${
+          className={`hidden md:inline-flex px-4 py-2 cursor-pointer rounded-full font-semibold transition whitespace-nowrap ${
             darkMode
               ? "bg-primary text-black hover:bg-blue-300"
               : "bg-primary text-white hover:bg-blue-400"
@@ -103,12 +123,16 @@ export default function Header({ sidebarWidth = 240 }: HeaderProps) {
         </button>
         <button
           className={
-            "px-4 py-2 rounded-full font-semibold transition whitespace-nowrap cursor-pointer"
+            "p-2 md:px-4 md:py-2 rounded-full font-semibold transition cursor-pointer"
           }
           onClick={() => setDarkMode((prev) => !prev)}
           aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
         >
-          {darkMode ? <Moon /> : <Sun />}
+          {darkMode ? (
+            <Moon className="w-5 h-5" />
+          ) : (
+            <Sun className="w-5 h-5" />
+          )}
         </button>
         <button
           className={`bg-transparent cursor-pointer ${

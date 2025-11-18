@@ -24,7 +24,7 @@ export function ScreenerCard({
   };
   return (
     <Card
-      className="relative h-48 overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
+      className="relative h-40 sm:h-44 md:h-48 overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
       onClick={handleClick}
       style={{ cursor: "pointer" }}
     >
@@ -34,7 +34,7 @@ export function ScreenerCard({
           backgroundImage: `url(${image})`,
         }}
       />
-      <div className="relative z-10 h-full w-full p-4 text-white flex flex-col justify-between">
+      <div className="relative z-10 h-full w-full p-3 md:p-4 text-white flex flex-col justify-between">
         <div className="flex gap-2">
           {tags.map((tag, idx) => (
             <Badge
@@ -47,10 +47,12 @@ export function ScreenerCard({
           ))}
         </div>
         <div>
-          <h3 className="font-semibold text-base">{label}</h3>
+          <h3 className="font-semibold text-sm md:text-base">{label}</h3>
           <p className="text-xs text-muted">{symbols} symbols</p>
           {change && (
-            <p className="text-green-400 font-medium text-sm">{change}</p>
+            <p className="text-green-400 font-medium text-xs md:text-sm">
+              {change}
+            </p>
           )}
         </div>
       </div>

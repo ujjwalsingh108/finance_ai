@@ -53,13 +53,13 @@ export default function Settings() {
 
         {/* Tabs: responsive scrollable */}
         <div className="overflow-x-auto w-full md:w-auto">
-          <div className="grid md:grid-cols-5 grid-col-1 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
             {tabs.map((tab) => (
               <Button
                 key={tab}
                 variant={activeTab === tab ? "default" : "secondary"}
                 onClick={() => setActiveTab(tab)}
-                className="text-sm whitespace-nowrap cursor-pointer"
+                className="text-xs sm:text-sm whitespace-nowrap cursor-pointer"
               >
                 {tab}
               </Button>

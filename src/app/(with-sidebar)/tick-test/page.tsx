@@ -98,10 +98,12 @@ export default function TickTestPage() {
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-3 md:p-4 space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>TrueData Tick Test</CardTitle>
+          <CardTitle className="text-lg md:text-xl">
+            TrueData Tick Test
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -115,52 +117,73 @@ export default function TickTestPage() {
             >
               {connectionStatus}
             </span>
-            {error && <div className="text-red-500 mt-2">Error: {error}</div>}
-            <div className="mt-4 space-x-4">
+            {error && (
+              <div className="text-red-500 mt-2 text-sm">Error: {error}</div>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2 md:space-x-4">
               <button
                 onClick={handleReconnect}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Reconnect
               </button>
               <button
                 onClick={handleResubscribe}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-green-500 text-white rounded hover:bg-green-600"
               >
                 Resubscribe
               </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <table className="min-w-full text-xs md:text-sm">
               <thead>
-                <tr>
-                  <th className="px-4 py-2">Time</th>
-                  <th className="px-4 py-2">Symbol</th>
-                  <th className="px-4 py-2">LTP</th>
-                  <th className="px-4 py-2">Qty</th>
-                  <th className="px-4 py-2">Bid</th>
-                  <th className="px-4 py-2">Ask</th>
-                  <th className="px-4 py-2">Volume</th>
+                <tr className="border-b">
+                  <th className="px-2 md:px-4 py-2 text-left">Time</th>
+                  <th className="px-2 md:px-4 py-2 text-left">Symbol</th>
+                  <th className="px-2 md:px-4 py-2 text-right">LTP</th>
+                  <th className="px-2 md:px-4 py-2 text-right hidden sm:table-cell">
+                    Qty
+                  </th>
+                  <th className="px-2 md:px-4 py-2 text-right hidden md:table-cell">
+                    Bid
+                  </th>
+                  <th className="px-2 md:px-4 py-2 text-right hidden md:table-cell">
+                    Ask
+                  </th>
+                  <th className="px-2 md:px-4 py-2 text-right hidden lg:table-cell">
+                    Volume
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {ticks.map((tick, index) => (
                   <tr key={index} className="border-t">
-                    <td className="px-4 py-2">
-                      {new Date(tick.time).toLocaleTimeString()}
+                    <td className="px-2 md:px-4 py-2 whitespace-nowrap">
+                      {new Date(tick.time).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </td>
-                    <td className="px-4 py-2">{tick.symbol}</td>
-                    <td className="px-4 py-2">{tick.ltp?.toFixed(2) || "-"}</td>
-                    <td className="px-4 py-2">{tick.lastTradedQty || "-"}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-2 md:px-4 py-2 font-medium">
+                      {tick.symbol}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 text-right">
+                      {tick.ltp?.toFixed(2) || "-"}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 text-right hidden sm:table-cell">
+                      {tick.lastTradedQty || "-"}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 text-right hidden md:table-cell">
                       {tick.bestBid?.toFixed(2) || "-"}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-2 md:px-4 py-2 text-right hidden md:table-cell">
                       {tick.bestAsk?.toFixed(2) || "-"}
                     </td>
-                    <td className="px-4 py-2">{tick.volume || "-"}</td>
+                    <td className="px-2 md:px-4 py-2 text-right hidden lg:table-cell">
+                      {tick.volume || "-"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
