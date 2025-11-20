@@ -66,35 +66,53 @@ export function AIAssistant() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const fetchBreakoutSignals = async (): Promise<BreakoutSignal[]> => {
+  const fetchBullishSignals = async (): Promise<BreakoutSignal[]> => {
     try {
       const { data, error } = await supabase
         .from("breakout_signals")
         .select("*")
-        .gte(
-          "created_at",
-          new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-        )
-        .gte("probability", 0.7)
-        .order("probability", { ascending: false })
+        .gte("created_at", new Date(Date.now() - 15 * 60 * 1000).toISOString())
+        .gte("probability", 0.6)
+        .order("created_at", { ascending: false })
         .limit(20);
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error("Error fetching signals:", error);
+      console.error("Error fetching bullish signals:", error);
+      return [];
+    }
+  };
+
+  const fetchBearishSignals = async (): Promise<BreakoutSignal[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("intraday_bearish_signals")
+        .select("*")
+        .gte("created_at", new Date(Date.now() - 15 * 60 * 1000).toISOString())
+        .gte("probability", 0.6)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching bearish signals:", error);
       return [];
     }
   };
 
   const analyzeWithAI = async (
     userPrompt: string,
-    signals: BreakoutSignal[]
+    bullishSignals: BreakoutSignal[],
+    bearishSignals: BreakoutSignal[]
   ) => {
-    // Build context from signals
-    const signalsContext = signals
-      .map((signal, index) => {
-        return `${index + 1}. ${signal.symbol}
+    // Build context from bullish signals
+    const bullishContext =
+      bullishSignals.length > 0
+        ? bullishSignals
+            .map((signal, index) => {
+              return `${index + 1}. ${signal.symbol} (BULLISH)
    - Signal Type: ${signal.signal_type}
    - Confidence: ${(signal.probability * 100).toFixed(1)}%
    - Criteria Met: ${signal.criteria_met}/6
@@ -106,137 +124,95 @@ export function AIAssistant() {
    - Direction: ${signal.predicted_direction}
    - Daily EMA20: ${signal.daily_ema20?.toFixed(2) || "N/A"}
    - 5min EMA20: ${signal.fivemin_ema20?.toFixed(2) || "N/A"}`;
-      })
-      .join("\n\n");
+            })
+            .join("\n\n")
+        : "No bullish signals in the last 15 minutes.";
+
+    // Build context from bearish signals
+    const bearishContext =
+      bearishSignals.length > 0
+        ? bearishSignals
+            .map((signal, index) => {
+              return `${index + 1}. ${signal.symbol} (BEARISH)
+   - Signal Type: ${signal.signal_type}
+   - Confidence: ${(signal.probability * 100).toFixed(1)}%
+   - Criteria Met: ${signal.criteria_met}/6
+   - Current Price: ₹${signal.current_price?.toFixed(2)}
+   - Target: ₹${signal.target_price?.toFixed(2)}
+   - Stop Loss: ₹${signal.stop_loss?.toFixed(2)}
+   - RSI: ${signal.rsi_value?.toFixed(1)}
+   - Volume Ratio: ${signal.volume_ratio?.toFixed(2) || "N/A"}
+   - Direction: ${signal.predicted_direction || "DOWN"}
+   - Daily EMA20: ${signal.daily_ema20?.toFixed(2) || "N/A"}
+   - 5min EMA20: ${signal.fivemin_ema20?.toFixed(2) || "N/A"}`;
+            })
+            .join("\n\n")
+        : "No bearish signals in the last 15 minutes.";
+
+    const totalSignals = bullishSignals.length + bearishSignals.length;
 
     const systemPrompt = `You are an expert technical analyst AI assistant specializing in stock breakout patterns. 
-You have access to the following ${signals.length} breakout signals from the last 4 hours:
+You have access to ${totalSignals} breakout signals from the last 15 minutes (${bullishSignals.length} bullish, ${bearishSignals.length} bearish):
 
-${signalsContext}
+**BULLISH BREAKOUT SIGNALS (from breakout_signals table):**
+${bullishContext}
+
+**BEARISH BREAKOUT SIGNALS (from intraday_bearish_signals table):**
+${bearishContext}
 
 Analyze these signals based on:
 - Technical indicators (RSI, EMA, Volume)
 - Breakout strength (criteria met, confidence score)
 - Risk-reward ratio (target vs stop loss)
 - Chart patterns and momentum
+- Signal direction (bullish vs bearish)
 
-Provide clear, actionable recommendations. Be concise but thorough.`;
+Provide clear, actionable recommendations. Be concise but thorough. Use emojis and format with markdown for better readability.
+When user asks about bearish/bearish breakouts, focus on the BEARISH signals.
+When user asks about bullish breakouts, focus on the BULLISH signals.`;
 
-    // Call your AI API (OpenAI, Anthropic, etc.)
-    // For now, return a mock intelligent response
-    return generateMockAIResponse(userPrompt, signals);
-  };
+    try {
+      // Call Groq API
+      const response = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_GROQ_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              {
+                role: "system",
+                content: systemPrompt,
+              },
+              {
+                role: "user",
+                content: userPrompt,
+              },
+            ],
+            temperature: 0.7,
+            max_completion_tokens: 1024,
+            top_p: 1,
+          }),
+        }
+      );
 
-  // Mock AI response generator (replace with actual AI API call)
-  const generateMockAIResponse = (
-    prompt: string,
-    signals: BreakoutSignal[]
-  ): string => {
-    const promptLower = prompt.toLowerCase();
-
-    // Find best stocks based on criteria
-    const topSignals = signals
-      .filter((s) => s.criteria_met >= 5)
-      .sort((a, b) => b.probability - a.probability)
-      .slice(0, 3);
-
-    if (
-      promptLower.includes("best") ||
-      promptLower.includes("recommend") ||
-      promptLower.includes("top")
-    ) {
-      if (topSignals.length === 0) {
-        return "Based on current analysis, I don't see any stocks meeting high-confidence criteria (5+ criteria met). Consider waiting for stronger signals.";
+      if (!response.ok) {
+        throw new Error(`Groq API error: ${response.statusText}`);
       }
 
-      let response = `📊 **Top ${topSignals.length} Breakout Recommendations:**\n\n`;
-
-      topSignals.forEach((signal, index) => {
-        const potentialReturn =
-          signal.target_price && signal.current_price
-            ? (
-                ((signal.target_price - signal.current_price) /
-                  signal.current_price) *
-                100
-              ).toFixed(2)
-            : "0";
-
-        response += `**${index + 1}. ${signal.symbol}** ${
-          signal.signal_type === "BULLISH_BREAKOUT" ? "🟢" : "🔴"
-        }\n`;
-        response += `   • Confidence: ${(signal.probability * 100).toFixed(
-          1
-        )}% (${signal.criteria_met}/6 criteria)\n`;
-        response += `   • Entry: ₹${signal.current_price?.toFixed(2)}\n`;
-        response += `   • Target: ₹${signal.target_price?.toFixed(
-          2
-        )} (+${potentialReturn}%)\n`;
-        response += `   • Stop Loss: ₹${signal.stop_loss?.toFixed(2)}\n`;
-        response += `   • Technical: RSI ${signal.rsi_value?.toFixed(
-          1
-        )}, Volume ${signal.volume_ratio?.toFixed(2)}x\n\n`;
-      });
-
-      response += `\n💡 **Analysis:** All recommended stocks show ${
-        topSignals[0].signal_type.includes("BULLISH") ? "bullish" : "bearish"
-      } momentum with strong technical confirmation.`;
-
-      return response;
-    }
-
-    if (
-      promptLower.includes("rsi") ||
-      promptLower.includes("oversold") ||
-      promptLower.includes("overbought")
-    ) {
-      const oversoldStocks = signals.filter(
-        (s) => s.rsi_value && s.rsi_value < 40
+      const data = await response.json();
+      return (
+        data.choices[0]?.message?.content ||
+        "I couldn't generate a response. Please try again."
       );
-      const overboughtStocks = signals.filter(
-        (s) => s.rsi_value && s.rsi_value > 60
-      );
-
-      return `📈 **RSI Analysis:**\n\n• Oversold stocks (RSI < 40): ${
-        oversoldStocks.length === 0
-          ? "None"
-          : oversoldStocks.map((s) => s.symbol).join(", ")
-      }\n• Overbought stocks (RSI > 60): ${
-        overboughtStocks.length === 0
-          ? "None"
-          : overboughtStocks.map((s) => s.symbol).join(", ")
-      }\n\n${
-        oversoldStocks.length > 0
-          ? "Oversold stocks may present buying opportunities."
-          : ""
-      }`;
+    } catch (error) {
+      console.error("Groq API error:", error);
+      return "Sorry, I'm having trouble connecting to the AI service. Please try again in a moment.";
     }
-
-    if (promptLower.includes("volume")) {
-      const highVolumeStocks = signals
-        .filter((s) => s.volume_ratio && s.volume_ratio > 1.5)
-        .sort((a, b) => (b.volume_ratio || 0) - (a.volume_ratio || 0))
-        .slice(0, 5);
-
-      return `📊 **High Volume Breakouts:**\n\n${highVolumeStocks
-        .map(
-          (s, i) =>
-            `${i + 1}. ${s.symbol}: ${s.volume_ratio?.toFixed(
-              2
-            )}x average volume`
-        )
-        .join("\n")}\n\nHigh volume confirms strong breakout momentum.`;
-    }
-
-    // Default response
-    return `I found ${signals.length} breakout signals. ${
-      topSignals.length > 0
-        ? `The strongest signal is **${topSignals[0].symbol}** with ${(
-            topSignals[0].probability * 100
-          ).toFixed(1)}% confidence and ${
-            topSignals[0].criteria_met
-          }/6 criteria met.`
-        : ""
-    }\n\nAsk me to:\n• "Show top 3 best stocks"\n• "Analyze RSI levels"\n• "Show high volume breakouts"\n• "What's the best bullish/bearish stock?"`;
   };
 
   const handleSendMessage = async (customInput?: string) => {
@@ -255,16 +231,17 @@ Provide clear, actionable recommendations. Be concise but thorough.`;
     setShowQuickActions(false);
 
     try {
-      // Fetch current breakout signals
-      const signals = await fetchBreakoutSignals();
+      // Fetch both bullish and bearish signals
+      const bullishSignals = await fetchBullishSignals();
+      const bearishSignals = await fetchBearishSignals();
 
-      if (signals.length === 0) {
+      if (bullishSignals.length === 0 && bearishSignals.length === 0) {
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
             content:
-              "I couldn't find any breakout signals in the last 4 hours. Please check back during market hours or when new signals are generated.",
+              "I couldn't find any breakout signals (bullish or bearish) in the last 15 minutes. Please check back during market hours or when new signals are generated.",
             timestamp: new Date(),
           },
         ]);
@@ -272,7 +249,11 @@ Provide clear, actionable recommendations. Be concise but thorough.`;
       }
 
       // Analyze with AI
-      const aiResponse = await analyzeWithAI(messageText, signals);
+      const aiResponse = await analyzeWithAI(
+        messageText,
+        bullishSignals,
+        bearishSignals
+      );
 
       const assistantMessage: Message = {
         role: "assistant",
