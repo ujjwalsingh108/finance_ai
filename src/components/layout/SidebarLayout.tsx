@@ -31,7 +31,7 @@ export default function SidebarLayout({
           isMobile={isMobile}
           onMenuClick={() => setIsCollapsed(false)}
         />
-        <main className="pt-16 min-h-screen p-3 md:p-6">{children}</main>
+        <main className="pt-16 min-h-screen p-3">{children}</main>
       </div>
 
       {/* Mobile Backdrop */}

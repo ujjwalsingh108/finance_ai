@@ -17,9 +17,14 @@ export function ScreenerCard({
 }) {
   const router = useRouter();
   const handleClick = () => {
-    // Use label as symbol for navigation, or add a symbol prop if available
-    if (label) {
-      router.push(`/screener/${encodeURIComponent(label)}`);
+    // Route to specific strategy pages based on label
+    if (label === "Intraday Equity Bullish") {
+      router.push(`/screener/intraday-bullish`);
+    } else if (label === "Intraday Equity Bearish") {
+      router.push(`/screener/intraday-bearish`);
+    } else {
+      // Other strategies - no route yet
+      console.log(`Strategy not implemented: ${label}`);
     }
   };
   return (

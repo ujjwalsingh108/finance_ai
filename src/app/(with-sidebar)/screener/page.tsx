@@ -1,126 +1,8 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AIScreenerSection } from "@/components/screener/AIScreenerSection";
-
-const screenerData = [
-  {
-    title: "Stocks",
-    items: [
-      {
-        label: "Stocks Bullish Tomorrow",
-        tags: ["Bullish"],
-        symbols: 20,
-        image: "/images/stocks-bullish-tomorrow.jpg",
-      },
-      {
-        label: "Stocks Bullish for a Week",
-        tags: ["Bullish"],
-        symbols: 222,
-        image: "/images/stocks-bullish-week.jpg",
-      },
-      {
-        label: "Stocks Bullish for a Month",
-        tags: ["Bullish"],
-        symbols: 524,
-        image: "/images/stocks-bullish-month.jpg",
-      },
-      {
-        label: "Bearish Stocks for Daytrading",
-        tags: ["Bearish"],
-        symbols: 10,
-        image: "/images/stocks-bearish-daytrading.jpg",
-      },
-    ],
-  },
-  {
-    title: "Cryptos",
-    items: [
-      {
-        label: "Cryptos Bullish Tomorrow",
-        tags: ["Bullish"],
-        symbols: 7,
-        image: "/images/cryptos-bullish-tomorrow.jpg",
-      },
-      {
-        label: "Bearish Cryptos for Daytrading",
-        tags: ["Bearish"],
-        symbols: 327,
-        image: "/images/cryptos-bearish-daytrading.jpg",
-      },
-      {
-        label: "Cryptos Bullish Tomorrow",
-        tags: ["Bullish"],
-        symbols: 7,
-        image: "/images/cryptos-bullish-tomorrow.jpg",
-      },
-      {
-        label: "Bearish Cryptos for Daytrading",
-        tags: ["Bearish"],
-        symbols: 327,
-        image: "/images/cryptos-bearish-daytrading.jpg",
-      },
-    ],
-  },
-  {
-    title: "ETFs",
-    items: [
-      {
-        label: "Bond ETFs",
-        tags: [],
-        symbols: 216,
-        image: "/images/bond-etfs.jpg",
-      },
-      {
-        label: "ETFs with Bullish Trend",
-        tags: ["Bullish"],
-        symbols: 68,
-        image: "/images/etfs-bullish.jpg",
-      },
-      {
-        label: "Bond ETFs",
-        tags: [],
-        symbols: 216,
-        image: "/images/bond-etfs.jpg",
-      },
-      {
-        label: "ETFs with Bullish Trend",
-        tags: ["Bullish"],
-        symbols: 68,
-        image: "/images/etfs-bullish.jpg",
-      },
-    ],
-  },
-  {
-    title: "Thematic Investment",
-    items: [
-      {
-        label: "Web3",
-        symbols: 18,
-        change: "+9.58%",
-        image: "/images/web3.jpg",
-      },
-      {
-        label: "AI Beneficiary",
-        symbols: 18,
-        change: "+2.56%",
-        image: "/images/ai-beneficiary.jpg",
-      },
-      {
-        label: "Web3",
-        symbols: 18,
-        change: "+9.58%",
-        image: "/images/web3.jpg",
-      },
-      {
-        label: "AI Beneficiary",
-        symbols: 18,
-        change: "+2.56%",
-        image: "/images/ai-beneficiary.jpg",
-      },
-    ],
-  },
-];
+import { createClient } from "@/utils/supabase/client";
 
 function handleExcelUpload(file: File) {
   if (!file) return;
@@ -138,6 +20,81 @@ export default function Screener() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = React.useState("");
   const [uploading, setUploading] = React.useState(false);
+  const [bullishCount, setBullishCount] = useState(0);
+  const [bearishCount, setBearishCount] = useState(0);
+
+  const supabase = createClient();
+
+  // Fetch signal counts
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        // Get bullish count from last 15 minutes
+        const { count: bullishTotal } = await supabase
+          .from("breakout_signals")
+          .select("*", { count: "exact", head: true })
+          .gte(
+            "created_at",
+            new Date(Date.now() - 15 * 60 * 1000).toISOString()
+          )
+          .eq("signal_type", "BULLISH_BREAKOUT")
+          .gte("probability", 0.6);
+
+        // Get bearish count from last 15 minutes
+        const { count: bearishTotal } = await supabase
+          .from("intraday_bearish_signals")
+          .select("*", { count: "exact", head: true })
+          .gte(
+            "created_at",
+            new Date(Date.now() - 15 * 60 * 1000).toISOString()
+          )
+          .gte("probability", 0.6);
+
+        setBullishCount(bullishTotal || 0);
+        setBearishCount(bearishTotal || 0);
+      } catch (error) {
+        console.error("Error fetching counts:", error);
+      }
+    };
+
+    fetchCounts();
+
+    // Refresh counts every 30 seconds
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
+  }, [supabase]);
+
+  const screenerData = [
+    {
+      title: "Stocks",
+      items: [
+        {
+          label: "Intraday Equity Bullish",
+          tags: ["Bullish"],
+          symbols: bullishCount,
+          image: "/images/stocks-bullish-tomorrow.jpg",
+        },
+        {
+          label: "Intraday Equity Bearish",
+          tags: ["Bearish"],
+          symbols: bearishCount,
+          image: "/images/stocks-bearish-daytrading.jpg",
+        },
+        {
+          label: "Swing Positional Equity Bullish (1-15 days)",
+          tags: ["Bullish"],
+          symbols: 0,
+          image: "/images/stocks-bullish-month.jpg",
+        },
+        {
+          label: "Swing Positional Equity Bearish (1-15 days)",
+          tags: ["Bearish"],
+          symbols: 0,
+          image: "/images/stocks-bearish-daytrading.jpg",
+        },
+      ],
+    },
+  ];
 
   const handleButtonClick = () => {
     if (fileInputRef.current) {
@@ -167,7 +124,7 @@ export default function Screener() {
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
-        <div className="flex flex-col items-start sm:items-end">
+        {/* <div className="flex flex-col items-start sm:items-end">
           <Button
             variant="default"
             className="mb-2 cursor-pointer text-sm md:text-base w-full sm:w-auto"
@@ -179,7 +136,7 @@ export default function Screener() {
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {fileName ? fileName : "No file chosen"}
           </span>
-        </div>
+        </div> */}
       </div>
       {screenerData.map((section, idx) => (
         <AIScreenerSection
