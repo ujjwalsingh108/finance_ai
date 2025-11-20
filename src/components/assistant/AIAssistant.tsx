@@ -324,161 +324,143 @@ When user asks about bullish breakouts, focus on the BULLISH signals.`;
         </div>
       )}
 
-      {/* Chat Window */}
+      {/* Full Page Modal */}
       {isOpen && (
-        <Card
-          className={`fixed bottom-2 right-2 md:bottom-6 md:right-6 shadow-2xl border-2 z-50 flex flex-col transition-all duration-300 p-0 overflow-hidden ${
-            isExpanded
-              ? "w-[calc(100vw-1rem)] h-[calc(100vh-1rem)] md:w-[700px] md:h-[85vh] md:rounded-lg"
-              : "w-[calc(100vw-1rem)] h-[60vh] md:w-[420px] md:h-[550px] md:rounded-lg"
-          }`}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-3 md:p-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-lg">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Bot className="h-5 w-5 flex-shrink-0" />
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-sm md:text-base truncate">
-                  AI Trading Assistant
-                </h3>
-                <p className="text-xs opacity-90 truncate">
-                  Breakout Analysis Expert
-                </p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <Card className="w-full h-full max-w-4xl max-h-[90vh] m-4 flex flex-col shadow-2xl border-2 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 md:p-6 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <Bot className="h-6 w-6 md:h-7 md:w-7 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-lg md:text-xl truncate">
+                    AI Trading Assistant
+                  </h3>
+                  <p className="text-sm opacity-90 truncate">
+                    Breakout Analysis Expert
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-              <Button
-                onClick={() => setIsExpanded(!isExpanded)}
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 md:h-8 md:w-8 text-white hover:bg-white/20 flex-shrink-0"
-              >
-                {isExpanded ? (
-                  <Minimize2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                ) : (
-                  <Maximize2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                )}
-              </Button>
               <Button
                 onClick={() => setIsOpen(false)}
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 md:h-8 md:w-8 text-white hover:bg-white/20 flex-shrink-0"
+                className="h-9 w-9 md:h-10 md:w-10 text-white hover:bg-white/20 flex-shrink-0"
               >
-                <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <X className="h-5 w-5 md:h-6 md:w-6" />
               </Button>
             </div>
-          </div>
 
-          {/* Messages - Scrollable */}
-          <ScrollArea className="flex-1 overflow-y-auto">
-            <div className="p-3 md:p-4 space-y-3 md:space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
+            {/* Messages - Scrollable */}
+            <ScrollArea className="flex-1 overflow-y-auto">
+              <div className="p-3 md:p-4 space-y-3 md:space-y-4">
+                {messages.map((message, index) => (
                   <div
-                    className={`max-w-[85%] md:max-w-[80%] rounded-lg p-2.5 md:p-3 ${
-                      message.role === "user"
-                        ? "bg-blue-500 text-white"
-                        : "bg-muted text-foreground"
+                    key={index}
+                    className={`flex ${
+                      message.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {message.role === "assistant" && (
-                      <Bot className="h-3.5 w-3.5 md:h-4 md:w-4 mb-1 inline-block text-blue-500" />
-                    )}
-                    <p className="text-xs md:text-sm whitespace-pre-wrap break-words leading-relaxed">
-                      {message.content}
-                    </p>
-                    <span className="text-[10px] md:text-xs opacity-70 mt-1 block">
-                      {message.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+                    <div
+                      className={`max-w-[85%] md:max-w-[80%] rounded-lg p-2.5 md:p-3 ${
+                        message.role === "user"
+                          ? "bg-blue-500 text-white"
+                          : "bg-muted text-foreground"
+                      }`}
+                    >
+                      {message.role === "assistant" && (
+                        <Bot className="h-3.5 w-3.5 md:h-4 md:w-4 mb-1 inline-block text-blue-500" />
+                      )}
+                      <p className="text-xs md:text-sm whitespace-pre-wrap break-words leading-relaxed">
+                        {message.content}
+                      </p>
+                      <span className="text-[10px] md:text-xs opacity-70 mt-1 block">
+                        {message.timestamp.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg p-2.5 md:p-3">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted rounded-lg p-2.5 md:p-3">
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                    </div>
                   </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
-
-          {/* Input */}
-          <div className="p-3 md:p-4 border-t bg-background flex-shrink-0">
-            <div className="flex gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask me about breakout stocks..."
-                className="min-h-[50px] md:min-h-[60px] resize-none text-xs md:text-sm"
-                disabled={isLoading}
-                rows={2}
-              />
-              <Button
-                onClick={() => handleSendMessage()}
-                disabled={!input.trim() || isLoading}
-                size="icon"
-                className="h-[50px] w-[50px] md:h-[60px] md:w-[60px] bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 flex-shrink-0"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4 md:h-5 md:w-5" />
                 )}
-              </Button>
-            </div>
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
 
-            {/* Quick Actions */}
-            {showQuickActions && messages.length <= 1 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  onClick={() => handleQuickAction("Show top 3 best stocks")}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
+            {/* Input */}
+            <div className="p-3 md:p-4 border-t bg-background flex-shrink-0">
+              <div className="flex gap-2">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Ask me about breakout stocks..."
+                  className="min-h-[50px] md:min-h-[60px] resize-none text-xs md:text-sm"
                   disabled={isLoading}
-                >
-                  🏆 Top 3 Stocks
-                </Button>
+                  rows={2}
+                />
                 <Button
-                  onClick={() => handleQuickAction("Analyze RSI levels")}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  disabled={isLoading}
+                  onClick={() => handleSendMessage()}
+                  disabled={!input.trim() || isLoading}
+                  size="icon"
+                  className="h-[50px] w-[50px] md:h-[60px] md:w-[60px] bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 flex-shrink-0"
                 >
-                  📊 RSI Analysis
-                </Button>
-                <Button
-                  onClick={() =>
-                    handleQuickAction("Show high volume breakouts")
-                  }
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  disabled={isLoading}
-                >
-                  📈 High Volume
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 md:h-5 md:w-5" />
+                  )}
                 </Button>
               </div>
-            )}
 
-            <p className="text-[10px] md:text-xs text-muted-foreground mt-2">
-              Press Enter to send, Shift+Enter for new line
-            </p>
-          </div>
-        </Card>
+              {/* Quick Actions */}
+              {showQuickActions && messages.length <= 1 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    onClick={() => handleQuickAction("Show top 3 best stocks")}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    disabled={isLoading}
+                  >
+                    🏆 Top 3 Stocks
+                  </Button>
+                  <Button
+                    onClick={() => handleQuickAction("Analyze RSI levels")}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    disabled={isLoading}
+                  >
+                    📊 RSI Analysis
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      handleQuickAction("Show high volume breakouts")
+                    }
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    disabled={isLoading}
+                  >
+                    📈 High Volume
+                  </Button>
+                </div>
+              )}
+
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-2">
+                Press Enter to send, Shift+Enter for new line
+              </p>
+            </div>
+          </Card>
+        </div>
       )}
     </>
   );
