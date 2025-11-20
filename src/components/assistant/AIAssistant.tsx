@@ -172,45 +172,37 @@ When user asks about bearish/bearish breakouts, focus on the BEARISH signals.
 When user asks about bullish breakouts, focus on the BULLISH signals.`;
 
     try {
-      // Call Groq API
-      const response = await fetch(
-        "https://api.groq.com/openai/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_GROQ_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            messages: [
-              {
-                role: "system",
-                content: systemPrompt,
-              },
-              {
-                role: "user",
-                content: userPrompt,
-              },
-            ],
-            temperature: 0.7,
-            max_completion_tokens: 1024,
-            top_p: 1,
-          }),
-        }
-      );
+      // Call our secure API route instead of Groq directly
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt,
+            },
+            {
+              role: "user",
+              content: userPrompt,
+            },
+          ],
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`Groq API error: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API error: ${response.statusText}`);
       }
 
       const data = await response.json();
       return (
-        data.choices[0]?.message?.content ||
-        "I couldn't generate a response. Please try again."
+        data.content || "I couldn't generate a response. Please try again."
       );
     } catch (error) {
-      console.error("Groq API error:", error);
+      console.error("Chat API error:", error);
       return "Sorry, I'm having trouble connecting to the AI service. Please try again in a moment.";
     }
   };
